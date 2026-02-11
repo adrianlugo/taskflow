@@ -98,13 +98,16 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
             success, project = API.get_project(self.request, project_id)
             if not success:
                 messages.error(self.request, 'Error al cargar el proyecto.')
-                return redirect('projects:list')
+                # Devolver contexto vacío en caso de error
+                return context
             self.project = project
         
-        context['project'] = self.project
+        # Solo agregar project al contexto si existe
+        if hasattr(self, 'project') and self.project:
+            context['project'] = self.project
         
         # Pre-cargar el formulario con datos actuales
-        if 'form' not in kwargs:
+        if 'form' not in kwargs and hasattr(self, 'project') and self.project:
             form = self.get_form()
             initial_data = {
                 'name': self.project.get('name'),
@@ -129,61 +132,53 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
                 return redirect('projects:list')
             self.project = project
         
+        if not form.is_valid():
+            return self.form_invalid(form)
+        
         project_data = {
-            'name': form.cleaned_data['name'],
-            'description': form.cleaned_data['description'],
-            'status': form.cleaned_data['status'],
+            'name': form.cleaned_data.get('name'),
+            'description': form.cleaned_data.get('description'),
+            'status': form.cleaned_data.get('status'),
         }
         
-        if form.cleaned_data['start_date']:
-            project_data['start_date'] = form.cleaned_data['start_date'].isoformat()
-        if form.cleaned_data['end_date']:
-            project_data['end_date'] = form.cleaned_data['end_date'].isoformat()
+        # Manejar fechas de forma segura
+        start_date = form.cleaned_data.get('start_date')
+        if start_date:
+            project_data['start_date'] = start_date.isoformat()
+        
+        end_date = form.cleaned_data.get('end_date')
+        if end_date:
+            project_data['end_date'] = end_date.isoformat()
         
         success, result = API.update_project(self.request, project_id, project_data)
         
         if success:
             messages.success(self.request, '¡Proyecto actualizado exitosamente!')
             return super().form_valid(form)
-        
-        add_form_errors(form, result)
-        return self.form_invalid(form)
+        else:
+            add_form_errors(form, result)
+            return self.form_invalid(form)
 
 class AddProjectMemberView(LoginRequiredMixin, TemplateView):
     def get(self, request, project_id): 
         """ Devuelve la lista de usuarios disponibles para agregar al proyecto """ 
-        print(f"=== DEBUG ADD MEMBER GET ===")
-        print(f"Project ID: {project_id}")
-        print(f"Usuario autenticado: {request.user.is_authenticated}")
-        print(f"Usuario: {request.user.username if request.user.is_authenticated else 'Anónimo'}")
-        print(f"Session keys: {list(request.session.keys())}")
-        
-        # Verificar si hay tokens en la sesión
-        access_token = request.session.get('access')
-        refresh_token = request.session.get('refresh')
-        print(f"Access token exists: {bool(access_token)}")
-        print(f"Refresh token exists: {bool(refresh_token)}")
-        
-        success, result = API.get_users(request)
-        print(f"API.get_users result - Success: {success}")
-        if not success:
-            print(f"API error: {result}")
-            return JsonResponse({'success': False, 'error': result.get('error', 'Error cargando usuarios')}) 
-        print(f"Usuarios obtenidos: {len(result) if isinstance(result, list) else 'No es lista'}")
-        print(f"=== END DEBUG ADD MEMBER GET ===")
-        return JsonResponse({'success': True, 'users': result})
+        success, users_result = API.get_users(request)
+        if success:
+            return JsonResponse({'success': True, 'users': users_result.get('results', [])})
+        else:
+            return JsonResponse({'success': False, 'error': 'Error al obtener usuarios'}, status=400)
     
-    def post(self, request, project_id): 
-        """ Agrega un miembro al proyecto """ 
-        user_id = request.POST.get('user_id')  
-        if not user_id: 
-            return JsonResponse({'success': False, 'error': 'user_id requerido'}, status=400) 
+    def post(self, request, project_id):
+        username = request.POST.get('username')
         
-        # Convertir a entero y enviar a la API
-        success, result = API.add_project_member(request, project_id, {'user_id': int(user_id)}) 
-        if success: 
-            return JsonResponse({'success': True, 'message': 'Miembro agregado exitosamente'}) 
-        else: 
+        if not username:
+            return JsonResponse({'success': False, 'error': 'Username requerido'}, status=400)
+        
+        success, result = API.add_project_member(request, project_id, username)
+        
+        if success:
+            return JsonResponse({'success': True, 'message': 'Miembro agregado exitosamente'})
+        else:
             return JsonResponse({'success': False, 'error': result.get('error', 'Error al agregar miembro')}, status=400)
 
 
