@@ -1,0 +1,123 @@
+{% extends 'tasks/base.html' %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-tasks"></i> Mis Tareas
+    </h2>
+    <a href="{% url 'tasks:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Tarea
+    </a>
+</div>
+
+<!-- Filtro por proyecto -->
+<div class="card mb-4">
+    <div class="card-body">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label for="project-filter" class="form-label">Filtrar por Proyecto:</label>
+            <select name="project" id="project-filter" class="form-select" onchange="this.form.submit()">
+                <option value="">Todos los proyectos</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}" {% if request.GET.project == project.id|stringformat:"s" %}selected{% endif %}>
+                    {{ project.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    </div>
+</div>
+
+{% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title">{{ task.title }}</h6>
+                        <div>
+                            <span class="badge bg-{{ task.status|default:'secondary' }} me-1">
+                                {{ task.status|title }}
+                            </span>
+                            <span class="badge bg-{{ task.priority|default:'secondary' }}">
+                                {{ task.priority|title }}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="card-text text-muted">
+                        {{ task.description|truncatewords:10|default:'Sin descripción' }}
+                    </p>
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-project-diagram"></i> {{ task.project_detail.name }}
+                        </small>
+                    </div>
+                    {% if task.assigned_to %}
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> {{ task.assigned_to.username }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    {% if task.due_date %}
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> {{ task.due_date|date:"d M Y H:i" }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{% url 'tasks:detail' task.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> Ver
+                        </a>
+                        <button class="btn btn-outline-warning" onclick="editTask({{ task.id }})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-outline-success" onclick="completeTask({{ task.id }})">
+                            <i class="fas fa-check"></i> Completar
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteTask({{ task.id }})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+                
+                <script>
+                function editTask(id) {
+                    alert('Función de editar tarea #' + id + ' - Próximamente');
+                }
+                
+                function completeTask(id) {
+                    if (confirm('¿Marcar esta tarea como completada?')) {
+                        alert('Función de completar tarea #' + id + ' - Próximamente');
+                    }
+                }
+                
+                function deleteTask(id) {
+                    if (confirm('¿Estás seguro de eliminar esta tarea?')) {
+                        alert('Función de eliminar tarea #' + id + ' - Próximamente');
+                    }
+                }
+                </script>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No tienes tareas aún</h4>
+        <p class="text-muted">Crea tu primera tarea para empezar a organizar tu trabajo.</p>
+        <a href="{% url 'tasks:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear Primera Tarea
+        </a>
+    </div>
+{% endif %}
+
+<div class="mt-4 text-muted">
+    <small>Total: {{ tasks_count }} tarea{{ tasks_count|pluralize }}</small>
+</div>
+{% endblock %}
