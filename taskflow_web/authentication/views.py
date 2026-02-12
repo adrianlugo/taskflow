@@ -34,21 +34,30 @@ class LoginView(FormView):
     def form_valid(self, form):
         username = form.cleaned_data['username']
         password = form.cleaned_data['password']
-        
+
         success, result = API.login(self.request, username, password)
-        
+
         if success:
             messages.success(self.request, '¡Bienvenido de nuevo!')
-            
-            # PASAR TOKENS AL FRONTEND
+
+            access_token = self.request.session.get('access')
+            refresh_token = self.request.session.get('refresh')
+
+            print(f"✅ Access token en sesión: {access_token}")
+            print(f"✅ Refresh token en sesión: {refresh_token}")
+
             response = super().form_valid(form)
-            
+
             # Guardar tokens en cookies para que JavaScript los acceda
-            response.set_cookie('access', self.request.session.get('access'))
-            response.set_cookie('refresh', self.request.session.get('refresh'))
-            
+            if access_token:
+                response.set_cookie('access', access_token, httponly=False, samesite='Lax', max_age=3600)
+                print(f"✅ Cookie 'access' establecida")
+            if refresh_token:
+                response.set_cookie('refresh', refresh_token, httponly=False, samesite='Lax', max_age=86400)
+                print(f"✅ Cookie 'refresh' establecida")
+
             return response
-            
+
         form.add_error(None, 'Credenciales inválidas. Inténtalo de nuevo.')
         return self.form_invalid(form)
     
