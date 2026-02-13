@@ -354,6 +354,7 @@ class API:
     def get_project(cls, request, project_id):
         """Obtener detalle de un proyecto."""
         url = f"{cls.BASE_URL}/projects/{project_id}/"
+        
         try:
             response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
@@ -496,9 +497,9 @@ class API:
     def delete_project(cls, request, project_id):
         """Eliminar un proyecto."""
         url = f"{cls.BASE_URL}/projects/{project_id}/"
-        headers = cls._get_headers(request)
+        
         try:
-            response = requests.delete(url, headers=headers)
+            response = cls._make_request(request, 'DELETE', url)
             response.raise_for_status()
             if response.text:
                 try:

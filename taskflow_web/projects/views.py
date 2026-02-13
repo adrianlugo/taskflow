@@ -79,6 +79,9 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
     form_class = ProjectForm
     success_url = reverse_lazy('projects:list')
     
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+    
     def get(self, request, *args, **kwargs):
         project_id = kwargs.get('pk')
         success, project = API.get_project(request, project_id)
@@ -149,43 +152,33 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
         
         add_form_errors(form, result)
         return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
 class AddProjectMemberView(LoginRequiredMixin, TemplateView):
     def get(self, request, project_id): 
         """ Devuelve la lista de usuarios disponibles para agregar al proyecto """ 
-        print(f"=== DEBUG ADD MEMBER GET ===")
-        print(f"Project ID: {project_id}")
-        print(f"Usuario autenticado: {request.user.is_authenticated}")
-        print(f"Usuario: {request.user.username if request.user.is_authenticated else 'Anónimo'}")
-        print(f"Session keys: {list(request.session.keys())}")
-        
-        # Verificar si hay tokens en la sesión
-        access_token = request.session.get('access')
-        refresh_token = request.session.get('refresh')
-        print(f"Access token exists: {bool(access_token)}")
-        print(f"Refresh token exists: {bool(refresh_token)}")
-        
         success, result = API.get_users(request)
-        print(f"API.get_users result - Success: {success}")
         if not success:
-            print(f"API error: {result}")
             return JsonResponse({'success': False, 'error': result.get('error', 'Error cargando usuarios')}) 
-        print(f"Usuarios obtenidos: {len(result) if isinstance(result, list) else 'No es lista'}")
-        print(f"=== END DEBUG ADD MEMBER GET ===")
         return JsonResponse({'success': True, 'users': result})
     
     def post(self, request, project_id): 
         """ Agrega un miembro al proyecto """ 
         user_id = request.POST.get('user_id')  
         if not user_id: 
-            return JsonResponse({'success': False, 'error': 'user_id requerido'}, status=400) 
+            return JsonResponse({'success': False, 'error': 'user_id requerido'}, status=400)
         
         # Convertir a entero y enviar a la API
         success, result = API.add_project_member(request, project_id, {'user_id': int(user_id)}) 
         if success: 
-            return JsonResponse({'success': True, 'message': 'Miembro agregado exitosamente'}) 
+            messages.success(request, 'Miembro agregado exitosamente')
+            return JsonResponse({'success': True, 'message': 'Miembro agregado exitosamente'})
         else: 
-            return JsonResponse({'success': False, 'error': result.get('error', 'Error al agregar miembro')}, status=400)
+            error_msg = result.get('error', 'Error al agregar miembro')
+            messages.error(request, f'Error: {error_msg}')
+            return JsonResponse({'success': False, 'error': error_msg}, status=400)
 
 
 class RemoveProjectMemberView(LoginRequiredMixin, TemplateView):
@@ -193,9 +186,12 @@ class RemoveProjectMemberView(LoginRequiredMixin, TemplateView):
         success, result = API.remove_project_member(request, project_id, user_id)
 
         if success:
+            messages.success(request, 'Miembro eliminado exitosamente')
             return JsonResponse({'success': True, 'message': 'Miembro eliminado exitosamente'})
         else:
-            return JsonResponse({'success': False, 'error': result.get('error', 'Error al eliminar miembro')}, status=400)
+            error_msg = result.get('error', 'Error al eliminar miembro')
+            messages.error(request, f'Error: {error_msg}')
+            return JsonResponse({'success': False, 'error': error_msg}, status=400)
 
 
 class ProjectDetailView(LoginRequiredMixin, TemplateView):
