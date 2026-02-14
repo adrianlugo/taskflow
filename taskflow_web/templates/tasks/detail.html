@@ -1,5 +1,9 @@
 {% extends 'tasks/base.html' %}
+{% load static %}
 
+{% block page_title %}Detalle de las Tareas{% endblock %}
+
+{% block auth_content %}
 {% if task %}
 <div class="row">
     <div class="col-md-8">
@@ -40,18 +44,18 @@
                             </tr>
                             <tr>
                                 <td><strong>Creado:</strong></td>
-                                <td>{{ task.created_at|date:"d M Y H:i" }}</td>
+                                <td>{{ task.created_at|slice:":10" }}</td>
                             </tr>
                             {% if task.due_date %}
                             <tr>
                                 <td><strong>Vencimiento:</strong></td>
-                                <td>{{ task.due_date|date:"d M Y H:i" }}</td>
+                                <td>{{ task.due_date|slice:":10" }}</td>
                             </tr>
                             {% endif %}
                             {% if task.completed_at %}
                             <tr>
                                 <td><strong>Completado:</strong></td>
-                                <td>{{ task.completed_at|date:"d M Y H:i" }}</td>
+                                <td>{{ task.completed_at|slice:":10" }}</td>
                             </tr>
                             {% endif %}
                         </table>

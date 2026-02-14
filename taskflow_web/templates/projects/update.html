@@ -105,8 +105,8 @@
             <div class="card-body">
                 <p><strong>Owner:</strong> {{ project.owner.username }}</p>
                 <p><strong>Miembros:</strong> {{ project.members|length }}</p>
-                <p><strong>Creado:</strong> {{ project.created_at|date:"d/m/Y" }}</p>
-                <p><strong>Actualizado:</strong> {{ project.updated_at|date:"d/m/Y" }}</p>
+                <p><strong>Creado:</strong> {{ project.created_at|slice:":10" }}</p>
+                <p><strong>Actualizado:</strong> {{ project.updated_at|slice:":10" }}</p>
             </div>
         </div>
     </div>

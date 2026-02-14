@@ -1,13 +1,20 @@
 {% extends 'tasks/base.html' %}
 
 {% block auth_content %}
-<div class="row justify-content-center">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-edit"></i> Editar Tarea
+    </h2>
+    <a href="{% url 'tasks:detail' task.id %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="row">
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h4 class="mb-0">
-                    <i class="fas fa-plus"></i> Nueva Tarea
-                </h4>
+                <h5 class="mb-0">Información de la Tarea</h5>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -113,5 +120,21 @@
             </div>
         </div>
     </div>
+    
+    <!--<div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Detalles Actuales</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Owner:</strong> {{ task.owner.username }}</p>
+                <p><strong>Miembros:</strong> {{ task.comment|length }}</p>
+                <p><strong>Creado:</strong> {{ task.created_at|slice:":10" }}</p>
+                <p><strong>Actualizado:</strong> {{ task.updated_at|slice:":10" }}</p>
+            </div>
+        </div>
+    </div> -->
 </div>
 {% endblock %}
+
+{% block extra_js %}{% endblock %}

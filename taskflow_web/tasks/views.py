@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.shortcuts import redirect
 from django.views.generic import TemplateView, FormView
 from django.urls import reverse_lazy
 from core.api import API
@@ -91,3 +92,90 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
             messages.error(self.request, 'Error al cargar la tarea.')
         
         return context
+
+class TaskUpdateView(LoginRequiredMixin, FormView):
+    template_name = 'tasks/update.html'
+    form_class = TaskForm
+    success_url = reverse_lazy('tasks:list')
+    
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        task_id = kwargs.get('pk')
+        success, task = API.get_task(request, task_id)
+        if not success:
+            messages.error(request, 'Error al cargar el proyecto.')
+            return redirect('tasks:list')
+        # Guardar la tarea para usarlo después
+        self.task = task
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Asegurarnos de que self.task exista
+        if not hasattr(self, 'project'):
+            project_id = self.kwargs.get('pk')
+            success, project = API.get_project(self.request, project_id)
+            if not success:
+                messages.error(self.request, 'Error al cargar el proyecto.')
+                # NO retornes redirect aquí, solo retorna context vacío
+                return context
+            self.project = project
+        
+        context['task'] = self.task
+        
+        # Pre-cargar el formulario con datos actuales
+        if 'form' not in kwargs:
+            form = self.get_form()
+            project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
+            assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
+            initial_data = {
+                'title': form.cleaned_data['title'],
+                'description': form.cleaned_data['description'],
+                'project': project_id,
+                'assigned_to_id': assigned_to_id,
+                'status': form.cleaned_data['status'],
+                'priority': form.cleaned_data['priority'],
+                'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
+            }
+            form.initial = initial_data
+            context['form'] = form
+        
+        return context
+    
+    def form_valid(self, form):
+        task_id = self.kwargs.get('pk')
+        project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
+        assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
+
+        # Asegurarnos de que self.task exista
+        if not hasattr(self, 'task'):
+            success, task = API.get_task(self.request, task_id)
+            if not success:
+                messages.error(self.request, 'Error al cargar la tarea.')
+                return redirect('tasks:list')
+            self.project = task
+        
+        task_data = {
+            'title': form.cleaned_data['title'],
+            'description': form.cleaned_data['description'],
+            'project': project_id,
+            'assigned_to_id': assigned_to_id,
+            'status': form.cleaned_data['status'],
+            'priority': form.cleaned_data['priority'],
+            'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
+        }
+                
+        success, result = API.update_project(self.request, task_id, task_data)
+        
+        if success:
+            messages.success(self.request, '¡Tarea actualizado exitosamente!')
+            return super().form_valid(form)
+        
+        add_form_errors(form, result)
+        return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        return super().form_invalid(form)
