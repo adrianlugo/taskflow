@@ -413,6 +413,31 @@ class API:
             return False, {'error': str(e)}
 
     @classmethod
+    def delete_task(cls, request, task_id):
+        """Eliminar una tarea."""
+        url = f"{cls.BASE_URL}/tasks/{task_id}/"
+
+        try:
+            response = cls._make_request(request, 'DELETE', url)
+            response.raise_for_status()
+            if response.text:
+                try:
+                    return True, response.json()
+                except ValueError:
+                    return True, {'detail': response.text}
+            return True, {}
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                try:
+                    return False, resp.json()
+                except ValueError:
+                    return False, {'error': resp.text}
+            return False, {'error': str(e)}
+        except requests.exceptions.RequestException as e:
+            return False, {'error': str(e)}
+
+    @classmethod
     def get_users(cls, request):
         """Obtener lista de todos los usuarios."""
         # Si no hay token, no intentes llamar a la API

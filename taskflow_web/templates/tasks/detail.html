@@ -64,18 +64,27 @@
                     <div class="col-md-6">
                         <h6>Acciones</h6>
                         <div class="d-grid gap-2">
-                            <button class="btn btn-sm btn-outline-primary">
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'tasks:update' task.id %}">
                                 <i class="fas fa-edit"></i> Editar Tarea
-                            </button>
-                            <button class="btn btn-sm btn-outline-success">
-                                <i class="fas fa-check"></i> Marcar Completada
-                            </button>
-                            <button class="btn btn-sm btn-outline-warning">
-                                <i class="fas fa-sync"></i> Cambiar Estado
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger">
-                                <i class="fas fa-trash"></i> Eliminar Tarea
-                            </button>
+                            </a>
+                            <form method="post" action="{% url 'tasks:complete' task.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-success w-100" {% if task.status == 'completado' %}disabled{% endif %}>
+                                    <i class="fas fa-check"></i> Marcar Completada
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'tasks:status' task.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-warning w-100">
+                                    <i class="fas fa-sync"></i> Cambiar Estado{% if next_status_label %} ({{ next_status_label }}){% endif %}
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger w-100">
+                                    <i class="fas fa-trash"></i> Eliminar Tarea
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

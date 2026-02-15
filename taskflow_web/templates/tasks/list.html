@@ -78,12 +78,18 @@
                         <a href="{% url 'tasks:update' task.id %}" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <button class="btn btn-outline-success" onclick="completeTask({{ task.id }})">
-                            <i class="fas fa-check"></i> Completar
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="deleteTask({{ task.id }})">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
+                        <form method="post" action="{% url 'tasks:complete' task.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-success w-100" {% if task.status == 'completado' %}disabled{% endif %}>
+                                    <i class="fas fa-check"></i> Completada
+                                </button>
+                            </form>
+                        <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger w-100">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </form>
                     </div>
                 </div>
                 

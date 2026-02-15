@@ -1,11 +1,27 @@
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import TemplateView, FormView
 from django.urls import reverse_lazy
 from core.api import API
 from .forms import TaskForm
 from core.mixins import LoginRequiredMixin
 from core.utils import add_form_errors
+
+STATUS_ORDER = ['por_hacer', 'en_progreso', 'revision', 'completado']
+STATUS_LABELS = {
+    'por_hacer': 'Por Hacer',
+    'en_progreso': 'En Progreso',
+    'revision': 'Revision',
+    'completado': 'Completado',
+}
+
+
+def _get_next_status(current_status):
+    if current_status in STATUS_ORDER:
+        index = STATUS_ORDER.index(current_status)
+        return STATUS_ORDER[(index + 1) % len(STATUS_ORDER)]
+    return STATUS_ORDER[0]
 
 class TaskListView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/list.html'
@@ -88,6 +104,10 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
         success, task = API.get_task(self.request, task_id)
         if success:
             context['task'] = task
+            current_status = task.get('status')
+            next_status = _get_next_status(current_status)
+            context['next_status'] = next_status
+            context['next_status_label'] = STATUS_LABELS.get(next_status, next_status)
         else:
             messages.error(self.request, 'Error al cargar la tarea.')
         
@@ -196,3 +216,45 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
 
     def form_invalid(self, form):
         return super().form_invalid(form)
+
+
+class TaskCompleteView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        task_id = kwargs.get('pk')
+        success, result = API.update_task(request, task_id, {'status': 'completado'})
+        if success:
+            messages.success(request, 'Tarea marcada como completada.')
+        else:
+            messages.error(request, 'No se pudo completar la tarea.')
+        return redirect('tasks:detail', pk=task_id)
+
+
+class TaskChangeStatusView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        task_id = kwargs.get('pk')
+        success, task = API.get_task(request, task_id)
+        if not success:
+            messages.error(request, 'No se pudo obtener la tarea para cambiar el estado.')
+            return redirect('tasks:list')
+
+        current_status = task.get('status')
+        next_status = _get_next_status(current_status)
+        success, result = API.update_task(request, task_id, {'status': next_status})
+
+        if success:
+            messages.success(request, f'Estado cambiado a {STATUS_LABELS.get(next_status, next_status)}.')
+        else:
+            messages.error(request, 'No se pudo cambiar el estado de la tarea.')
+
+        return redirect('tasks:detail', pk=task_id)
+
+
+class TaskDeleteView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        task_id = kwargs.get('pk')
+        success, result = API.delete_task(request, task_id)
+        if success:
+            messages.success(request, 'Tarea eliminada exitosamente.')
+            return redirect('tasks:list')
+        messages.error(request, 'No se pudo eliminar la tarea.')
+        return redirect('tasks:detail', pk=task_id)

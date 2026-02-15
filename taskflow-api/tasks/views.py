@@ -208,7 +208,7 @@ def assign_task(request, task_id):
         request.user not in task.project.members.all()):
         return Response(
             {'error': 'No tienes permiso para asignar esta tarea'}, 
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN # type: ignore
         )
     
     user_id = request.data.get('user_id')
@@ -222,6 +222,6 @@ def assign_task(request, task_id):
     except User.DoesNotExist:
         return Response(
             {'error': 'User not found'}, 
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_404_NOT_FOUND # type: ignore
         )
 
