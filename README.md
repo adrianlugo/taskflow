@@ -31,6 +31,11 @@ Sistema de gestión de proyectos y tareas con arquitectura de microservicios, fr
 - **Filtro de usuarios** en tiempo real
 - **Permisos basados en ownership**
 - **Dashboard con estadísticas**
+### Gestion de Tareas
+- **CRUD completo** de tareas
+- **Estados de tarea** (por hacer, en progreso, revision, completado)
+- **Marcar como completada** con fecha automatica
+- **Asignacion de tarea** a usuarios
 
 ### 👥 Gestión de Miembros
 - **Selector de usuarios** con búsqueda y filtro
@@ -179,11 +184,11 @@ python manage.py runserver 9000
 - **Dashboard**: Vista general de proyectos y tareas
 - **Proyectos**: Lista y gestión de proyectos
 - **Perfil**: Gestión de información personal
-- **Tareas**: Gestión de tareas (próximamente)
+- **Tareas**: Gestion completa de tareas
 
 ## 🔌 API Endpoints
 
-### Autenticación
+### Autenticacion
 ```
 POST /api/auth/register/     # Registro de usuario
 POST /api/auth/login/        # Login de usuario
@@ -194,12 +199,12 @@ PATCH /api/auth/profile/     # Actualizar perfil
 
 ### Proyectos
 ```
-GET    /api/projects/           # Listar proyectos
-POST   /api/projects/           # Crear proyecto
-GET    /api/projects/{id}/      # Ver proyecto
-PATCH  /api/projects/{id}/      # Actualizar proyecto
-DELETE /api/projects/{id}/      # Eliminar proyecto
-POST   /api/projects/{id}/members/    # Agregar miembro
+GET    /api/projects/                # Listar proyectos
+POST   /api/projects/                # Crear proyecto
+GET    /api/projects/{id}/           # Ver proyecto
+PATCH  /api/projects/{id}/           # Actualizar proyecto
+DELETE /api/projects/{id}/           # Eliminar proyecto
+POST   /api/projects/{id}/members/   # Agregar miembro
 DELETE /api/projects/{id}/members/{user_id}/  # Eliminar miembro
 ```
 
@@ -207,6 +212,18 @@ DELETE /api/projects/{id}/members/{user_id}/  # Eliminar miembro
 ```
 GET /api/users/                 # Listar usuarios
 GET /api/users/{id}/            # Ver usuario
+```
+
+### Tareas
+```
+GET    /api/tasks/              # Listar tareas
+POST   /api/tasks/              # Crear tarea
+GET    /api/tasks/{id}/         # Ver tarea
+PATCH  /api/tasks/{id}/         # Actualizar tarea
+DELETE /api/tasks/{id}/         # Eliminar tarea
+POST   /api/tasks/{id}/assign/  # Asignar tarea
+GET    /api/tasks/{id}/comments/        # Listar comentarios
+POST   /api/tasks/{id}/comments/       # Crear comentario
 ```
 
 ## 🎯 Funcionalidades Detalladas
@@ -279,13 +296,11 @@ GET /api/users/{id}/            # Ver usuario
 
 ## 🐛 Problemas Conocidos
 
-- **Gestión de tareas**: En desarrollo (próximamente)
 - **Notificaciones en tiempo real**: Planeado para futuras versiones
 - **Archivos adjuntos**: Funcionalidad pendiente
 
 ## 🚀 Próximamente
 
-- [ ] Gestión completa de tareas
 - [ ] Sistema de notificaciones
 - [ ] Archivos adjuntos en proyectos
 - [ ] Chat entre miembros
