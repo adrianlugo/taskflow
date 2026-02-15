@@ -97,67 +97,84 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/update.html'
     form_class = TaskForm
     success_url = reverse_lazy('tasks:list')
-    
+
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
-    
+
     def get(self, request, *args, **kwargs):
         task_id = kwargs.get('pk')
         success, task = API.get_task(request, task_id)
         if not success:
-            messages.error(request, 'Error al cargar el proyecto.')
+            messages.error(request, 'Error al cargar la tarea.')
             return redirect('tasks:list')
-        # Guardar la tarea para usarlo después
         self.task = task
         return super().get(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+
+        success, projects_result = API.get_projects(self.request)
+        if success:
+            kwargs['user_projects'] = projects_result.get('results', [])
+        else:
+            kwargs['user_projects'] = []
+
+        success, users_result = API.get_users(self.request)
+        if success:
+            kwargs['users'] = users_result if isinstance(users_result, list) else users_result.get('results', [])
+        else:
+            kwargs['users'] = []
+
+        return kwargs
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Asegurarnos de que self.task exista
-        if not hasattr(self, 'project'):
-            project_id = self.kwargs.get('pk')
-            success, project = API.get_project(self.request, project_id)
+
+        if not hasattr(self, 'task'):
+            task_id = self.kwargs.get('pk')
+            success, task = API.get_task(self.request, task_id)
             if not success:
-                messages.error(self.request, 'Error al cargar el proyecto.')
-                # NO retornes redirect aquí, solo retorna context vacío
+                messages.error(self.request, 'Error al cargar la tarea.')
                 return context
-            self.project = project
-        
+            self.task = task
+
+        raw_due = self.task.get('due_date')  # "2026-02-14T08:37:00-06:00"
+        due_local = ''
+        if raw_due:
+            due_local = raw_due[:16]  # "2026-02-14T08:37"
+
         context['task'] = self.task
-        
-        # Pre-cargar el formulario con datos actuales
+
         if 'form' not in kwargs:
             form = self.get_form()
-            project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
-            assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
+            assigned_to = self.task.get('assigned_to')
+            assigned_to_id = assigned_to.get('id') if isinstance(assigned_to, dict) else assigned_to
             initial_data = {
-                'title': form.cleaned_data['title'],
-                'description': form.cleaned_data['description'],
-                'project': project_id,
-                'assigned_to_id': assigned_to_id,
-                'status': form.cleaned_data['status'],
-                'priority': form.cleaned_data['priority'],
-                'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
+                'title': self.task.get('title'),
+                'description': self.task.get('description'),
+                'project': str(self.task.get('project') or ''),
+                'assigned_to': str(assigned_to_id or ''),
+                'status': self.task.get('status'),
+                'priority': self.task.get('priority'),
+                'due_date': due_local,
             }
             form.initial = initial_data
             context['form'] = form
-        
+
         return context
-    
+
     def form_valid(self, form):
         task_id = self.kwargs.get('pk')
         project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
         assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
 
-        # Asegurarnos de que self.task exista
         if not hasattr(self, 'task'):
             success, task = API.get_task(self.request, task_id)
             if not success:
                 messages.error(self.request, 'Error al cargar la tarea.')
                 return redirect('tasks:list')
-            self.project = task
-        
+            self.task = task
+
         task_data = {
             'title': form.cleaned_data['title'],
             'description': form.cleaned_data['description'],
@@ -167,15 +184,15 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
             'priority': form.cleaned_data['priority'],
             'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
         }
-                
-        success, result = API.update_project(self.request, task_id, task_data)
-        
+
+        success, result = API.update_task(self.request, task_id, task_data)
+
         if success:
-            messages.success(self.request, '¡Tarea actualizado exitosamente!')
+            messages.success(self.request, 'Tarea actualizada exitosamente.')
             return super().form_valid(form)
-        
+
         add_form_errors(form, result)
         return self.form_invalid(form)
-    
+
     def form_invalid(self, form):
         return super().form_invalid(form)

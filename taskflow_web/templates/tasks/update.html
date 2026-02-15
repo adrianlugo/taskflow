@@ -5,9 +5,15 @@
     <h2>
         <i class="fas fa-edit"></i> Editar Tarea
     </h2>
-    <a href="{% url 'tasks:detail' task.id %}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Volver
-    </a>
+    {% if task and task.id %}
+        <a href="{% url 'tasks:detail' task.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    {% else %}
+        <a href="{% url 'tasks:list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    {% endif %}
 </div>
 
 <div class="row">
@@ -113,7 +119,7 @@
                             <i class="fas fa-arrow-left"></i> Cancelar
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Crear Tarea
+                            <i class="fas fa-save"></i> Guardar Cambios
                         </button>
                     </div>
                 </form>
