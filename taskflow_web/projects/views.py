@@ -5,27 +5,29 @@ from django.views.generic import TemplateView, FormView
 from django.urls import reverse_lazy
 from core.api import API
 from core.mixins import LoginRequiredMixin
-from core.utils import add_form_errors
+from core.utils import add_form_errors, handle_api_auth_error
 from .forms import ProjectForm
 
 class ProjectListView(LoginRequiredMixin, TemplateView):
     template_name = 'projects/list.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+
         # Obtener proyectos del usuario
-        success, projects_result = API.get_projects(self.request)
+        success, projects_result = API.get_projects(request)
         if success:
             context['projects'] = projects_result.get('results', [])
             context['projects_count'] = projects_result.get('count', 0)
         else:
+            redirect_response = handle_api_auth_error(request, projects_result)
+            if redirect_response:
+                return redirect_response
             context['projects'] = []
             context['projects_count'] = 0
-            messages.error(self.request, 'Error al cargar los proyectos.')
-        
-        return context
+            messages.error(request, 'Error al cargar los proyectos.')
 
+        return self.render_to_response(context)
 
 class ProjectDeleteView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
@@ -34,6 +36,9 @@ class ProjectDeleteView(LoginRequiredMixin, TemplateView):
         if success:
             messages.success(request, 'Proyecto eliminado correctamente.')
         else:
+            redirect_response = handle_api_auth_error(request, result)
+            if redirect_response:
+                return redirect_response
             msg = 'No se pudo eliminar el proyecto.'
             if isinstance(result, dict):
                 msg = result.get('detail') or result.get('error') or msg
@@ -86,6 +91,9 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
         project_id = kwargs.get('pk')
         success, project = API.get_project(request, project_id)
         if not success:
+            redirect_response = handle_api_auth_error(request, project)
+            if redirect_response:
+                return redirect_response
             messages.error(request, 'Error al cargar el proyecto.')
             return redirect('projects:list')
         # Guardar el proyecto para usarlo después
@@ -129,6 +137,9 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
         if not hasattr(self, 'project'):
             success, project = API.get_project(self.request, project_id)
             if not success:
+                redirect_response = handle_api_auth_error(self.request, project)
+                if redirect_response:
+                    return redirect_response
                 messages.error(self.request, 'Error al cargar el proyecto.')
                 return redirect('projects:list')
             self.project = project
@@ -196,19 +207,21 @@ class RemoveProjectMemberView(LoginRequiredMixin, TemplateView):
 
 class ProjectDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'projects/detail.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+
+    def get(self, request, *args, **kwargs):
+        context = {}
         project_id = kwargs.get('pk')
 
-        success, project = API.get_project(self.request, project_id)
+        success, project = API.get_project(request, project_id)
         if success:
             context['project'] = project
         else:
-            messages.error(self.request, 'Error al cargar el proyecto.')
-        
-        # Agregar información del usuario
-        user_data = self.request.session.get('user_data', {})
-        context['user'] = user_data
-        
-        return context
+            redirect_response = handle_api_auth_error(request, project)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, 'Error al cargar el proyecto.')
+
+        # Agregar informacion del usuario
+        context['user'] = request.session.get('user_data', {})
+
+        return self.render_to_response(context)

@@ -23,6 +23,26 @@ class API:
         if isinstance(value, (list, tuple)):
             return [cls._jsonable(v) for v in value]
         return value
+
+    @classmethod
+    def is_auth_error(cls, result):
+        """
+        Detecta errores de autenticación/expiración en respuestas de la API.
+        """
+        if not isinstance(result, dict):
+            return False
+        detail = str(result.get('detail', '')).lower()
+        error = str(result.get('error', '')).lower()
+        code = str(result.get('code', '')).lower()
+        if code == 'token_not_valid':
+            return True
+        if 'token' in detail and 'valid' in detail:
+            return True
+        if 'no autorizado' in detail or 'not authenticated' in detail:
+            return True
+        if 'token' in error and 'expir' in error:
+            return True
+        return False
     
     @classmethod
     def _refresh_token(cls, request):
@@ -68,13 +88,23 @@ class API:
         try:
             response = requests.request(method, url, **kwargs)
             
-            # Si el token expiró, intentar refrescarlo
-            if (response.status_code == 401 and 
-                'Token is expired' in response.text and
-                request.session.get('refresh')):
+            # Si el token expir?? o no es v??lido, intentar refrescarlo
+            if response.status_code == 401 and request.session.get('refresh'):
+                token_invalid = False
+                try:
+                    data = response.json()
+                    code = data.get('code')
+                    detail = data.get('detail', '')
+                    if code == 'token_not_valid' or 'token_not_valid' in str(detail):
+                        token_invalid = True
+                except ValueError:
+                    token_invalid = False
+
+                if 'Token is expired' in response.text or 'token_not_valid' in response.text:
+                    token_invalid = True
                 
-                if cls._refresh_token(request):
-                    # Reintentar la petición con el nuevo token
+                if token_invalid and cls._refresh_token(request):
+                    # Reintentar la petici??n con el nuevo token
                     headers = cls._get_headers(request)
                     final_headers = headers.copy()
                     if 'headers' in kwargs and kwargs['headers']:
@@ -152,10 +182,9 @@ class API:
     def get_profile(cls, request):
         """Obtener perfil extendido (Profile) del usuario."""
         url = f"{cls.BASE_URL}/auth/profile/"
-        headers = cls._get_headers(request)
 
         try:
-            response = requests.get(url, headers=headers)
+            response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
             data = response.json()
 
@@ -201,10 +230,9 @@ class API:
     def get_user_profile(cls, request):
         """Obtener perfil del usuario"""
         url = f"{cls.BASE_URL}/auth/user/"
-        headers = cls._get_headers(request)
         
         try:
-            response = requests.get(url, headers=headers)
+            response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
             
             return True, response.json()
@@ -224,10 +252,9 @@ class API:
     def get_projects(cls, request):
         """Obtener proyectos del usuario"""
         url = f"{cls.BASE_URL}/projects/"
-        headers = cls._get_headers(request)
         
         try:
-            response = requests.get(url, headers=headers)
+            response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
             
             return True, response.json()
@@ -247,11 +274,10 @@ class API:
     def create_project(cls, request, project_data):
         """Crear nuevo proyecto"""
         url = f"{cls.BASE_URL}/projects/"
-        headers = cls._get_headers(request)
         
         try:
             payload = cls._jsonable(project_data)
-            response = requests.post(url, json=payload, headers=headers)
+            response = cls._make_request(request, 'POST', url, json=payload)
             response.raise_for_status()
             
             return True, response.json()
@@ -271,14 +297,13 @@ class API:
     def get_tasks(cls, request, project_id=None):
         """Obtener tareas (opcionalmente filtradas por proyecto)"""
         url = f"{cls.BASE_URL}/tasks/"
-        headers = cls._get_headers(request)
         
         params = {}
         if project_id:
             params['project'] = project_id
         
         try:
-            response = requests.get(url, headers=headers, params=params)
+            response = cls._make_request(request, 'GET', url, params=params)
             response.raise_for_status()
             
             return True, response.json()
@@ -298,11 +323,10 @@ class API:
     def create_task(cls, request, task_data):
         """Crear nueva tarea"""
         url = f"{cls.BASE_URL}/tasks/"
-        headers = cls._get_headers(request)
         
         try:
             payload = cls._jsonable(task_data)
-            response = requests.post(url, json=payload, headers=headers)
+            response = cls._make_request(request, 'POST', url, json=payload)
             response.raise_for_status()
             
             return True, response.json()
@@ -568,9 +592,8 @@ class API:
     def get_task(cls, request, task_id):
         """Obtener detalle de una tarea."""
         url = f"{cls.BASE_URL}/tasks/{task_id}/"
-        headers = cls._get_headers(request)
         try:
-            response = requests.get(url, headers=headers)
+            response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
             return True, response.json()
         except requests.exceptions.HTTPError as e:

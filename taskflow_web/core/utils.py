@@ -1,4 +1,9 @@
-__all__ = ['add_form_errors']
+__all__ = ['add_form_errors', 'handle_api_auth_error']
+
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from core.api import API
 
 def add_form_errors(form, result):
     """
@@ -22,3 +27,16 @@ def add_form_errors(form, result):
                 form.add_error(None, str(msg))
     else:
         form.add_error(None, str(result))
+
+
+def handle_api_auth_error(request, result):
+    """
+    Si la API responde con error de autenticación, cerrar sesión y redirigir a login.
+    Devuelve un redirect o None.
+    """
+    if API.is_auth_error(result):
+        API.logout(request)
+        messages.warning(request, 'Tu sesión expiró. Inicia sesión de nuevo.')
+        login_url = reverse_lazy('authentication:login')
+        return redirect(f"{login_url}?next={request.path}")
+    return None

@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from core.api import API
 from .forms import TaskForm
 from core.mixins import LoginRequiredMixin
-from core.utils import add_form_errors
+from core.utils import add_form_errors, handle_api_auth_error
 
 STATUS_ORDER = ['por_hacer', 'en_progreso', 'revision', 'completado']
 STATUS_LABELS = {
@@ -25,29 +25,35 @@ def _get_next_status(current_status):
 
 class TaskListView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/list.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+
         # Obtener proyectos para el filtro
-        success, projects_result = API.get_projects(self.request)
+        success, projects_result = API.get_projects(request)
         if success:
             context['projects'] = projects_result.get('results', [])
         else:
+            redirect_response = handle_api_auth_error(request, projects_result)
+            if redirect_response:
+                return redirect_response
             context['projects'] = []
-        
+
         # Obtener tareas (filtradas por proyecto si se especifica)
-        project_id = self.request.GET.get('project')
-        success, tasks_result = API.get_tasks(self.request, project_id)
+        project_id = request.GET.get('project')
+        success, tasks_result = API.get_tasks(request, project_id)
         if success:
             context['tasks'] = tasks_result.get('results', [])
             context['tasks_count'] = tasks_result.get('count', 0)
         else:
+            redirect_response = handle_api_auth_error(request, tasks_result)
+            if redirect_response:
+                return redirect_response
             context['tasks'] = []
             context['tasks_count'] = 0
-            messages.error(self.request, 'Error al cargar las tareas.')
-        
-        return context
+            messages.error(request, 'Error al cargar las tareas.')
+
+        return self.render_to_response(context)
 
 class TaskCreateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/create.html'
@@ -96,12 +102,12 @@ class TaskCreateView(LoginRequiredMixin, FormView):
 
 class TaskDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/detail.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+
+    def get(self, request, *args, **kwargs):
+        context = {}
         task_id = kwargs.get('pk')
 
-        success, task = API.get_task(self.request, task_id)
+        success, task = API.get_task(request, task_id)
         if success:
             context['task'] = task
             current_status = task.get('status')
@@ -109,9 +115,12 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
             context['next_status'] = next_status
             context['next_status_label'] = STATUS_LABELS.get(next_status, next_status)
         else:
-            messages.error(self.request, 'Error al cargar la tarea.')
-        
-        return context
+            redirect_response = handle_api_auth_error(request, task)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, 'Error al cargar la tarea.')
+
+        return self.render_to_response(context)
 
 class TaskUpdateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/update.html'
@@ -125,6 +134,9 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
         task_id = kwargs.get('pk')
         success, task = API.get_task(request, task_id)
         if not success:
+            redirect_response = handle_api_auth_error(request, task)
+            if redirect_response:
+                return redirect_response
             messages.error(request, 'Error al cargar la tarea.')
             return redirect('tasks:list')
         self.task = task
@@ -225,6 +237,9 @@ class TaskCompleteView(LoginRequiredMixin, View):
         if success:
             messages.success(request, 'Tarea marcada como completada.')
         else:
+            redirect_response = handle_api_auth_error(request, result)
+            if redirect_response:
+                return redirect_response
             messages.error(request, 'No se pudo completar la tarea.')
         return redirect('tasks:detail', pk=task_id)
 
@@ -234,6 +249,9 @@ class TaskChangeStatusView(LoginRequiredMixin, View):
         task_id = kwargs.get('pk')
         success, task = API.get_task(request, task_id)
         if not success:
+            redirect_response = handle_api_auth_error(request, task)
+            if redirect_response:
+                return redirect_response
             messages.error(request, 'No se pudo obtener la tarea para cambiar el estado.')
             return redirect('tasks:list')
 
@@ -256,5 +274,8 @@ class TaskDeleteView(LoginRequiredMixin, View):
         if success:
             messages.success(request, 'Tarea eliminada exitosamente.')
             return redirect('tasks:list')
+        redirect_response = handle_api_auth_error(request, result)
+        if redirect_response:
+            return redirect_response
         messages.error(request, 'No se pudo eliminar la tarea.')
         return redirect('tasks:detail', pk=task_id)
