@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
-from rest_framework_simplejwt.views import TokenRefreshView
+from authentication.jwt_views import HiddenTokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
@@ -35,7 +35,7 @@ urlpatterns = [
     path('api/tasks/', include('tasks.urls')),
 
     # JWT refresh
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/refresh/', HiddenTokenRefreshView.as_view(), name='token_refresh'),
     
     # Admin de Django
     path('admin/', admin.site.urls),

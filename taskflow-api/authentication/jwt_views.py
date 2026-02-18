@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.views import TokenRefreshView
 from drf_spectacular.utils import extend_schema
 
 
@@ -23,7 +24,7 @@ from drf_spectacular.utils import extend_schema
     **Importante:** El token de refresco puede expirar. Si expira, necesitarás hacer login nuevamente.
     """,
     operation_id="auth_refresh_token",
-    tags=["Autenticación"],
+    tags=["Autenticacion"],
     request={
         'application/json': {
             'type': 'object',
@@ -124,3 +125,11 @@ def refresh_token_view(request):
             {'error': f'Error al procesar el token: {str(e)}'}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@extend_schema(exclude=True)
+class HiddenTokenRefreshView(TokenRefreshView):
+    """
+    Mantiene el endpoint funcional pero oculto en la documentación.
+    """
+    pass

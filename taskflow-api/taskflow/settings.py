@@ -186,14 +186,14 @@ SPECTACULAR_SETTINGS = {
     API REST para el gestor de tareas colaborativo TaskFlow.
     
     **Características principales:**
-    - 🔐 Autenticación con tokens JWT
-    - 👥 Gestión de usuarios y perfiles
-    - 📋 Creación y gestión de proyectos
+    - 🔐 Autenticacion con tokens JWT
+    - 👥 gestion de usuarios y perfiles
+    - 📋 Creación y gestion de proyectos
     - ✅ Asignación y seguimiento de tareas
     - 💬 Sistema de comentarios en tareas
-    - 👥 Gestión de miembros de proyectos
+    - 👥 gestion de miembros de proyectos
     
-    **Flujo de autenticación:**
+    **Flujo de Autenticacion:**
     1. Regístrate en `/api/auth/register/`
     2. Inicia sesión en `/api/auth/login/` para obtener tokens
     3. Usa el token de acceso en endpoints protegidos
@@ -204,6 +204,11 @@ SPECTACULAR_SETTINGS = {
     - Usa el botón "Authorize" en esta interfaz para configurar tu token
     - Formato: `Bearer tu_access_token_aqui`
     """,
+    'TAGS': [
+        {'name': 'Autenticacion', 'description': 'Login, registro, perfil y usuarios.'},
+        {'name': 'Proyectos', 'description': 'CRUD de proyectos y gestion de miembros.'},
+        {'name': 'Tareas', 'description': 'CRUD de tareas, estados, asignaciones y comentarios.'},
+    ],
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
@@ -215,7 +220,7 @@ SPECTACULAR_SETTINGS = {
         'tryItOutEnabled': True,
         'docExpansion': 'none',
         'operationsSorter': 'alpha',
-        'tagsSorter': 'alpha',
+        'tagsSorter': 'none',
         'defaultModelsExpandDepth': 2,
         'defaultModelExpandDepth': 2,
     },
@@ -253,34 +258,4 @@ SPECTACULAR_SETTINGS = {
     </script>
     """,
     # Excluir vistas específicas de la generación automática
-    'SWAGGER_UI_SETTINGS': {
-        'deepLinking': True,
-        'persistAuthorization': True,
-        'displayOperationId': True,
-        'tryItOutEnabled': True,
-        'docExpansion': 'none',
-        'operationsSorter': 'alpha',
-        'tagsSorter': 'alpha',
-        'defaultModelsExpandDepth': 2,
-        'defaultModelExpandDepth': 2,
-    },
-    'REDOC_UI_SETTINGS': {
-        'hideDownloadButton': False,
-        'hideHostname': False,
-        'noAutoAuth': False,
-        'hideOneOfDescription': False,
-        'theme': {
-            'colors': {
-                'primary': {
-                    'main': '#007bff'
-                }
-            }
-        },
-        'requiredPropsFirst': True,
-        'expandResponses': '200',
-        'hideLoading': True,
-        'nativeScrollbars': True,
-        'pathInMiddlePanel': True,
-        'untrustedSpec': False,
-    },
 }

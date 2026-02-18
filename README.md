@@ -266,6 +266,9 @@ POST   /api/tasks/{id}/comments/       # Crear comentario
 ### Gestión de Proyectos
 ![Proyectos](assets/projects.png)
 
+### Gestión de Tareas
+![Proyectos](assets/tasks.png)
+
 ### Agregar Miembros
 ![Miembros](assets/members.png)
 
@@ -314,7 +317,7 @@ Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) pa
 
 ## 👥 Autores
 
-- **Tu Nombre** - *Desarrollador Principal* - [TuGitHub]
+- **Adrian Lugo Frontela** - *Desarrollador Principal* - [adrianlugo]
 
 ## 🙏 Agradecimientos
 

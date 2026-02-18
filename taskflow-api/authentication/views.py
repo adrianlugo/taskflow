@@ -21,7 +21,7 @@ class UserListView(generics.ListAPIView):
     @extend_schema(
         summary="Listar todos los usuarios",
         description="Retorna una lista de todos los usuarios registrados en el sistema",
-        tags=["Autenticación"],
+        tags=["Autenticacion"],
         responses={
             200: UserSerializer(many=True),
             401: {'type': 'object', 'properties': {'detail': {'type': 'string'}}}
@@ -35,7 +35,7 @@ class UserListView(generics.ListAPIView):
     summary="Iniciar sesión de usuario",
     description="Autentica al usuario y retorna tokens JWT de acceso y refresco",
     operation_id="auth_login",
-    tags=["Autenticación"],
+    tags=["Autenticacion"],
     request={
         'application/json': {
             'type': 'object',
@@ -88,7 +88,7 @@ def login_view(request):
 @extend_schema(
     summary="Obtener perfil de usuario",
     description="Retorna el perfil extendido del usuario autenticado",
-    tags=["Autenticación"],
+    tags=["Autenticacion"],
     responses={
         200: ProfileSerializer,
         401: {'type': 'object', 'properties': {'detail': {'type': 'string'}}}
@@ -106,7 +106,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         summary="Actualizar perfil de usuario",
         description="Actualiza el perfil extendido del usuario autenticado",
         operation_id="auth_profile_update",
-        tags=["Autenticación"],
+        tags=["Autenticacion"],
         request=ProfileSerializer,
         responses={
             200: ProfileSerializer,
@@ -121,7 +121,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         summary="Actualizar parcialmente perfil de usuario",
         description="Actualiza parcialmente el perfil extendido del usuario autenticado",
         operation_id="auth_profile_partial_update",
-        tags=["Autenticación"],
+        tags=["Autenticacion"],
         request=ProfileSerializer,
         responses={
             200: ProfileSerializer,
@@ -137,7 +137,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     summary="Obtener datos del usuario actual",
     description="Retorna información básica del usuario autenticado",
     operation_id="auth_user_current",
-    tags=["Autenticación"],
+    tags=["Autenticacion"],
     responses={
         200: UserSerializer,
         401: {'type': 'object', 'properties': {'detail': {'type': 'string', 'description': 'No autorizado'}}}
@@ -154,7 +154,7 @@ def user_profile(request):
     summary="Registrar nuevo usuario",
     description="Crea una nueva cuenta de usuario en el sistema",
     operation_id="auth_register",
-    tags=["Autenticación"],
+    tags=["Autenticacion"],
     request={
         'application/json': {
             'type': 'object',

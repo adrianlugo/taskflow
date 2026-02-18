@@ -184,6 +184,16 @@ def remove_project_member(request, project_id, user_id):
     except User.DoesNotExist:
         return Response({'error': 'Usuario no encontrado'}, status=404)
 
+@extend_schema(
+    summary="Listar usuarios disponibles",
+    description="Retorna usuarios que no son miembros del proyecto (solo owner)",
+    tags=["Proyectos"],
+    responses={
+        200: {'type': 'object', 'properties': {'success': {'type': 'boolean'}, 'users': {'type': 'array'}}},
+        403: {'type': 'object', 'properties': {'error': {'type': 'string'}}},
+        404: {'type': 'object', 'properties': {'error': {'type': 'string'}}}
+    }
+)
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def list_available_users(request, project_id):
