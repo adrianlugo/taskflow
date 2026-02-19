@@ -70,7 +70,7 @@ from drf_spectacular.types import OpenApiTypes
                     'type': 'object',
                     'properties': {
                         '1_registro': {'type': 'string', 'description': 'Paso 1: Registro'},
-                        '2_login': {'type': 'string', 'description': 'Paso 2: Login'},
+                        '2_login': {'type': 'string', 'description': 'Paso 2: Inicio de sesion'},
                         '3_usar_token': {'type': 'string', 'description': 'Paso 3: Usar token'},
                         '4_crear_proyecto': {'type': 'string', 'description': 'Paso 4: Crear proyecto'},
                         '5_crear_tarea': {'type': 'string', 'description': 'Paso 5: Crear tarea'}
@@ -125,7 +125,7 @@ def api_welcome(request):
         "guía_rápida": {
             "1_registro": "POST /api/auth/register/ - Crea una cuenta",
             "2_login": "POST /api/auth/login/ - Obtén tokens JWT",
-            "3_usar_token": "Usa el botón 'Authorize' en /api/docs/ con tu token",
+            "3_usar_token": "Usa el boton 'Autorizar' en /api/docs/ con tu token",
             "4_crear_proyecto": "POST /api/projects/ - Crea tu primer proyecto",
             "5_crear_tarea": "POST /api/tasks/ - Añade tareas al proyecto"
         },
@@ -147,7 +147,7 @@ def api_welcome(request):
 
 @require_http_methods(["GET"])
 @extend_schema(
-    summary="Health Check de la API",
+    summary="Verificacion de estado de la API",
     description="Verifica que la API esté funcionando correctamente",
     tags=["General"],
     responses={

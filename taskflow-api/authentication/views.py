@@ -162,7 +162,9 @@ def user_profile(request):
                 'username': {'type': 'string', 'description': 'Nombre de usuario único'},
                 'email': {'type': 'string', 'description': 'Correo electrónico'},
                 'password': {'type': 'string', 'description': 'Contraseña'},
-                'password_confirm': {'type': 'string', 'description': 'Confirmación de contraseña'}
+                'password_confirm': {'type': 'string', 'description': 'Confirmación de contraseña'},
+                'first_name': {'type': 'string', 'description': 'Nombre (opcional)'},
+                'last_name': {'type': 'string', 'description': 'Apellido (opcional)'}
             },
             'required': ['username', 'email', 'password', 'password_confirm']
         }
@@ -190,6 +192,8 @@ def register_view(request):
     email = request.data.get('email')
     password = request.data.get('password')
     password_confirm = request.data.get('password_confirm')
+    first_name = request.data.get('first_name', '')
+    last_name = request.data.get('last_name', '')
     
     # Validaciones básicas
     if not username or not email or not password or not password_confirm:
@@ -220,7 +224,9 @@ def register_view(request):
     user = User.objects.create_user(
         username=username,
         email=email,
-        password=password
+        password=password,
+        first_name=first_name,
+        last_name=last_name
     )
     
     return Response({

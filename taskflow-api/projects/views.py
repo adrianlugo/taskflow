@@ -11,7 +11,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 @extend_schema(
     summary="Listar proyectos del usuario",
-    description="Retorna todos los proyectos donde el usuario es owner o miembro",
+    description="Retorna todos los proyectos donde el usuario es propietario o miembro",
     tags=["Proyectos"],
     responses={
         200: ProjectSerializer(many=True),
@@ -138,7 +138,7 @@ def add_project_member(request, project_id):
     
     if project.owner != request.user:
         return Response(
-            {'error': 'Solo el owner del proyecto puede agregar miembros'}, 
+            {'error': 'Solo el propietario del proyecto puede agregar miembros'}, 
             status=403
         )
     
@@ -171,7 +171,7 @@ def remove_project_member(request, project_id, user_id):
     
     if project.owner != request.user:
         return Response(
-            {'error': 'Solo el owner del proyecto puede eliminar miembros'}, 
+            {'error': 'Solo el propietario del proyecto puede eliminar miembros'}, 
             status=403
         )
     
@@ -186,7 +186,7 @@ def remove_project_member(request, project_id, user_id):
 
 @extend_schema(
     summary="Listar usuarios disponibles",
-    description="Retorna usuarios que no son miembros del proyecto (solo owner)",
+    description="Retorna usuarios que no son miembros del proyecto (solo propietario)",
     tags=["Proyectos"],
     responses={
         200: {'type': 'object', 'properties': {'success': {'type': 'boolean'}, 'users': {'type': 'array'}}},
@@ -199,7 +199,7 @@ def remove_project_member(request, project_id, user_id):
 def list_available_users(request, project_id):
     project = get_object_or_404(Project, id=project_id)
 
-    # Solo el owner puede ver usuarios disponibles
+    # Solo el propietario puede ver usuarios disponibles
     if project.owner != request.user:
         return Response({'error': 'No autorizado'}, status=403)
 

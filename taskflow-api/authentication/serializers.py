@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError("Las contraseñas no coinciden")
-        attrs.pop('confirm_password')  # Remove confirm_password
+        attrs.pop('confirm_password')  # Remueve confirm_password antes de crear el usuario
         return attrs
     
     def create(self, validated_data):

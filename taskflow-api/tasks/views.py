@@ -56,7 +56,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
         project_id = self.request.data.get('project')
         project = get_object_or_404(Project, id=project_id)
         
-        # Security check: Only project owner or members can create tasks
+        # Verificacion de seguridad: solo el propietario o miembros pueden crear tareas
         if project.owner != self.request.user and self.request.user not in project.members.all():
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("No tienes permiso para crear tareas en este proyecto")
@@ -218,10 +218,10 @@ def assign_task(request, task_id):
         user = User.objects.get(id=user_id)
         task.assigned_to = user
         task.save()
-        return Response({'message': 'Task assigned successfully'})
+        return Response({'message': 'Tarea asignada exitosamente'})
     except User.DoesNotExist:
         return Response(
-            {'error': 'User not found'}, 
+            {'error': 'Usuario no encontrado'}, 
             status=status.HTTP_404_NOT_FOUND # type: ignore
         )
 

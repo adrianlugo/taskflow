@@ -201,11 +201,11 @@ SPECTACULAR_SETTINGS = {
     
     **Uso de la API:**
     - Todos los endpoints protegidos requieren token JWT
-    - Usa el botón "Authorize" en esta interfaz para configurar tu token
+    - Usa el botón "Autorizar" en esta interfaz para configurar tu token
     - Formato: `Bearer tu_access_token_aqui`
     """,
     'TAGS': [
-        {'name': 'Autenticacion', 'description': 'Login, registro, perfil y usuarios.'},
+        {'name': 'Autenticacion', 'description': 'Inicio de sesion, registro, perfil y usuarios.'},
         {'name': 'Proyectos', 'description': 'CRUD de proyectos y gestion de miembros.'},
         {'name': 'Tareas', 'description': 'CRUD de tareas, estados, asignaciones y comentarios.'},
     ],

@@ -17,7 +17,11 @@ class AuthenticationTests(TestCase):
         }
 
     def test_user_registration(self):
-        response = self.client.post('/api/auth/register/', self.user_data)
+        register_data = {
+            **self.user_data,
+            'password_confirm': self.user_data['password'],
+        }
+        response = self.client.post('/api/auth/register/', register_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(username='testuser').exists())
 

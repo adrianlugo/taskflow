@@ -67,8 +67,8 @@
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/taskflow-api.git
-cd taskflow-api
+git clone https://github.com/tu-usuario/taskflow.git
+cd taskflow
 ```
 
 ### 2. Crear entorno virtual
@@ -270,6 +270,14 @@ taskflow-api/
 └── requirements.txt         # Dependencias
 ```
 
+## 🧠 Decisiones Técnicas
+
+- **Django + DRF:** acelera el desarrollo de una API mantenible con autenticación, serialización y permisos integrados.
+- **JWT (access + refresh):** permite sesiones stateless y separación clara entre autenticación y autorización.
+- **Modelo de permisos por proyecto:** el propietario administra miembros y solo usuarios autorizados pueden crear/asignar tareas.
+- **Documentación OpenAPI con drf-spectacular:** contrato de API visible y probado desde Swagger/ReDoc.
+- **SQLite en local:** simplifica arranque para portafolio; la estructura permite migrar a PostgreSQL en producción.
+
 ## 🚀 Despliegue
 
 ### Docker
@@ -305,7 +313,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 ## 📞 Soporte
 
 - 📧 Email:  adrianlugofrontela@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/adrianlugo/taskflow-api/)
+- 🐛 Issues: [GitHub Issues](https://github.com/adrianlugo/taskflow/issues)
 - 📖 Documentación: [Documentación Completa](http://127.0.0.1:8000/api/docs/)
 
 ## 🎉 ¡Gracias por usar TaskFlow API!
