@@ -127,7 +127,7 @@ python manage.py test
 
 ## Capturas
 
-Puedes usar estas capturas para mostrar la UI en el portafolio:
+Puedes usar estas capturas para mostrar la UI del proyecto:
 
 - `../assets/dashboard.png`
 - `../assets/projects.png`

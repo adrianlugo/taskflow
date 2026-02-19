@@ -2,6 +2,11 @@
 
 Sistema de gestión de proyectos y tareas con arquitectura de microservicios, frontend Django y API REST Django.
 
+## Documentacion por modulo
+
+- Backend API: `taskflow-api/README.md`
+- Frontend Web: `taskflow_web/README.md`
+
 ## 📋 Tabla de Contenidos
 
 - [Características](#-características)
@@ -160,20 +165,29 @@ python manage.py runserver 8000
 ### 2. Iniciar el Frontend Web
 ```bash
 cd taskflow_web
-python manage.py runserver 9000
+python manage.py runserver 8001
 ```
 
 ### 3. Acceder a la aplicación
-- **Frontend**: http://localhost:9000
+- **Frontend**: http://localhost:8001
 - **API**: http://localhost:8000/api
 - **Documentación API**: http://localhost:8000/api/docs/
 
 ## 📖 Uso
 
 ### 1. Registro y Login
-1. Visita http://localhost:9000/auth/register/
+1. Visita http://localhost:8001/auth/register/
 2. Crea una cuenta nueva
-3. Inicia sesión en http://localhost:9000/auth/login/
+3. Inicia sesión en http://localhost:8001/auth/login/
+
+## Flujo Local Rapido
+
+1. Inicia la API en `http://127.0.0.1:8000`.
+2. Inicia la web en `http://127.0.0.1:8001`.
+3. Registra un usuario en `/auth/register/`.
+4. Crea un proyecto en `/projects/create/`.
+5. Crea una tarea en `/tasks/create/`.
+6. Abre la documentación de API en `/api/docs/`.
 
 ### 2. Gestión de Proyectos
 1. Desde el dashboard, click en "Proyectos"
@@ -210,8 +224,8 @@ DELETE /api/projects/{id}/members/{user_id}/  # Eliminar miembro
 
 ### Usuarios
 ```
-GET /api/users/                 # Listar usuarios
-GET /api/users/{id}/            # Ver usuario
+GET /api/auth/users/            # Listar usuarios
+GET /api/auth/users/{id}/       # Ver usuario
 ```
 
 ### Tareas
