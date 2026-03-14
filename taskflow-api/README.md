@@ -321,7 +321,6 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 ## 📞 Soporte
 
 - 📧 Email:  lugofrontelatrabajo@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/adrianlugo/taskflow/issues)
 - 📖 Documentación: [Documentación Completa](http://127.0.0.1:8000/api/docs/)
 
 ## 🎉 ¡Gracias por usar TaskFlow API!
