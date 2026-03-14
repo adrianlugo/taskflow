@@ -40,6 +40,7 @@ Sistema de gestión de proyectos y tareas con arquitectura de microservicios, fr
 - **CRUD completo** de tareas
 - **Estados de tarea** (por hacer, en progreso, revision, completado)
 - **Marcar como completada** con fecha automatica
+**Comentarios integrados** en el detalle de la tarea para registrar avances y retroalimentación
 - **Asignacion de tarea** a usuarios
 
 ### 👥 Gestión de Miembros
@@ -332,6 +333,7 @@ Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) pa
 ## 👥 Autores
 
 - **Adrian Lugo Frontela** - *Desarrollador Principal* - [adrianlugo]
+- 📧 Email:  lugofrontelatrabajo@gmail.com
 
 ## 🙏 Agradecimientos
 

@@ -294,6 +294,28 @@ class API:
             return False, {'error': str(e)}
     
     @classmethod
+    def get_tasks(cls, request, project_id=None):
+        url = f"{cls.BASE_URL}/tasks/"
+        params = {}
+        if project_id:
+            params['project'] = project_id
+
+        try:
+            response = cls._make_request(request, 'GET', url, params=params)
+            response.raise_for_status()
+            return True, response.json()
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                try:
+                    return False, resp.json()
+                except ValueError:
+                    return False, {'error': resp.text}
+            return False, {'error': str(e)}
+        except requests.exceptions.RequestException as e:
+            return False, {'error': str(e)}
+
+    @classmethod
     def get_task(cls, request, task_id):
         """Obtener detalle de una tarea."""
         url = f"{cls.BASE_URL}/tasks/{task_id}/"
@@ -649,3 +671,5 @@ class API:
         request.session.pop('user_data', None)
         request.session.save()
         return True, {'message': 'Sesión cerrada correctamente'}
+
+

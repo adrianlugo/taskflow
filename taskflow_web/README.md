@@ -11,6 +11,7 @@ Este proyecto consume la API REST de `taskflow-api` para autenticación, proyect
 - CRUD de proyectos.
 - Gestion de miembros por proyecto.
 - CRUD de tareas.
+- Comentarios en el detalle de tarea con historial y formulario integrado.
 - Cambio rapido de estado de tareas (flujo por columnas).
 - Mensajeria de estado con `django.contrib.messages`.
 
@@ -141,3 +142,11 @@ Puedes usar estas capturas para mostrar la UI del proyecto:
 - La logica de consumo API se centralizo en `core/api.py` para evitar duplicacion.
 - El control de acceso se resolvio con `LoginRequiredMixin` basado en token de sesion.
 - Se priorizo UX de negocio con feedback inmediato via mensajes de exito/error.
+
+## 📞 Soporte
+
+- 📧 Email:  lugofrontelatrabajo@gmail.com
+
+---
+
+**Hecho con ❤️ y Django**

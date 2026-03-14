@@ -1,10 +1,11 @@
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import TemplateView, FormView
 from django.urls import reverse_lazy
 from core.api import API
-from .forms import TaskForm
+from .forms import TaskForm, TaskCommentForm
 from core.mixins import LoginRequiredMixin
 from core.utils import add_form_errors, handle_api_auth_error
 
@@ -102,25 +103,84 @@ class TaskCreateView(LoginRequiredMixin, FormView):
 
 class TaskDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/detail.html'
+    comment_form_class = TaskCommentForm
 
     def get(self, request, *args, **kwargs):
-        context = {}
         task_id = kwargs.get('pk')
-
         success, task = API.get_task(request, task_id)
-        if success:
-            context['task'] = task
-            current_status = task.get('status')
-            next_status = _get_next_status(current_status)
-            context['next_status'] = next_status
-            context['next_status_label'] = STATUS_LABELS.get(next_status, next_status)
-        else:
+        if not success:
             redirect_response = handle_api_auth_error(request, task)
             if redirect_response:
                 return redirect_response
             messages.error(request, 'Error al cargar la tarea.')
+            return self.render_to_response({'task': None})
 
+        context = self._build_context(request, task_id, task)
+        if isinstance(context, HttpResponse):
+            return context
         return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        task_id = kwargs.get('pk')
+        form = TaskCommentForm(request.POST)
+        if form.is_valid():
+            payload = {'content': form.cleaned_data['content']}
+            success, result = API.create_task_comment(request, task_id, payload)
+            if success:
+                messages.success(request, 'Comentario agregado correctamente.')
+                return redirect('tasks:detail', pk=task_id)
+            redirect_response = handle_api_auth_error(request, result)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, result.get('error', 'No se pudo guardar el comentario.'))
+        else:
+            messages.error(request, 'Completa el comentario antes de enviarlo.')
+
+        success, task = API.get_task(request, task_id)
+        if not success:
+            redirect_response = handle_api_auth_error(request, task)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, 'Error al recargar la tarea.')
+            return redirect('tasks:list')
+
+        context = self._build_context(request, task_id, task, comment_form=form)
+        if isinstance(context, HttpResponse):
+            return context
+        return self.render_to_response(context)
+
+    def _build_context(self, request, task_id, task, comment_form=None):
+        context = {'task': task}
+        current_status = task.get('status')
+        next_status = _get_next_status(current_status)
+        context['next_status'] = next_status
+        context['next_status_label'] = STATUS_LABELS.get(next_status, next_status)
+        comment_form = comment_form or self.comment_form_class()
+        context['comment_form'] = comment_form
+
+        comments_context, redirect_response = self._load_comments_context(request, task_id)
+        if redirect_response:
+            return redirect_response
+        context.update(comments_context)
+
+        return context
+
+    def _load_comments_context(self, request, task_id):
+        success, comments_result = API.get_task_comments(request, task_id)
+        if not success:
+            redirect_response = handle_api_auth_error(request, comments_result)
+            if redirect_response:
+                return None, redirect_response
+            messages.error(request, 'Error al cargar los comentarios de la tarea.')
+            return {'comments': [], 'comments_count': 0}, None
+
+        comments = comments_result.get('results', [])
+        return {
+            'comments': comments,
+            'comments_count': comments_result.get('count', len(comments))
+        }, None
+
+
 
 class TaskUpdateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/update.html'

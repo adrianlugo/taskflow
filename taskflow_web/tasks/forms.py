@@ -81,3 +81,15 @@ class TaskForm(forms.Form):
         # Actualizar choices de usuarios
         user_choices = [('', 'Sin asignar')] + [(str(u['id']), u['username']) for u in users]
         self.fields['assigned_to'].choices = user_choices
+
+
+class TaskCommentForm(forms.Form):
+    content = forms.CharField(
+        label='Comentario',
+        max_length=3000,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Agrega una nota breve sobre el avance de la tarea'
+        })
+    )

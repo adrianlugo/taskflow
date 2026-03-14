@@ -136,7 +136,7 @@ curl http://127.0.0.1:8000/health/
 
 - **URL:** http://127.0.0.1:8000/admin/ (requiere superusuario creado con python manage.py createsuperuser).
 - **Que se administra:** usuarios, perfiles, proyectos, tareas y comentarios con filtros, busquedas y campos de solo lectura para inspeccion rapida.
-- **Por que lo destaco:** muestra el modelo de datos completo y permite gestionar relaciones criticas, ideal para portafolios o perfiles como el de WONCA.
+- **Por que lo destaco:** muestra el modelo de datos completo y permite gestionar relaciones criticas.
 - **Checklist de verificacion:** ejecuta python manage.py makemigrations && python manage.py migrate y python manage.py check antes de levantar el servidor.
 ``
 
@@ -320,7 +320,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ## 📞 Soporte
 
-- 📧 Email:  adrianlugofrontela@gmail.com
+- 📧 Email:  lugofrontelatrabajo@gmail.com
 - 🐛 Issues: [GitHub Issues](https://github.com/adrianlugo/taskflow/issues)
 - 📖 Documentación: [Documentación Completa](http://127.0.0.1:8000/api/docs/)
 
