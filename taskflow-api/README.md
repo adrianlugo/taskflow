@@ -130,7 +130,15 @@ SIMPLE_JWT = {
 ### Health Check
 ```bash
 curl http://127.0.0.1:8000/health/
-```
+``
+
+## Panel de Administracion
+
+- **URL:** http://127.0.0.1:8000/admin/ (requiere superusuario creado con python manage.py createsuperuser).
+- **Que se administra:** usuarios, perfiles, proyectos, tareas y comentarios con filtros, busquedas y campos de solo lectura para inspeccion rapida.
+- **Por que lo destaco:** muestra el modelo de datos completo y permite gestionar relaciones criticas, ideal para portafolios o perfiles como el de WONCA.
+- **Checklist de verificacion:** ejecuta python manage.py makemigrations && python manage.py migrate y python manage.py check antes de levantar el servidor.
+``
 
 ## 📚 Documentación
 

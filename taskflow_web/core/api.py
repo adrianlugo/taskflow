@@ -294,20 +294,53 @@ class API:
             return False, {'error': str(e)}
     
     @classmethod
-    def get_tasks(cls, request, project_id=None):
-        """Obtener tareas (opcionalmente filtradas por proyecto)"""
-        url = f"{cls.BASE_URL}/tasks/"
-        
-        params = {}
-        if project_id:
-            params['project'] = project_id
-        
+    def get_task(cls, request, task_id):
+        """Obtener detalle de una tarea."""
+        url = f"{cls.BASE_URL}/tasks/{task_id}/"
         try:
-            response = cls._make_request(request, 'GET', url, params=params)
+            response = cls._make_request(request, 'GET', url)
             response.raise_for_status()
-            
             return True, response.json()
-            
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                try:
+                    return False, resp.json()
+                except ValueError:
+                    return False, {'error': resp.text}
+            return False, {'error': str(e)}
+        except requests.exceptions.RequestException as e:
+            return False, {'error': str(e)}
+
+    @classmethod
+    def get_task_comments(cls, request, task_id):
+        """Listar comentarios de una tarea."""
+        url = f"{cls.BASE_URL}/tasks/{task_id}/comments/"
+        try:
+            response = cls._make_request(request, 'GET', url)
+            response.raise_for_status()
+            return True, response.json()
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                try:
+                    return False, resp.json()
+                except ValueError:
+                    return False, {'error': resp.text}
+            return False, {'error': str(e)}
+        except requests.exceptions.RequestException as e:
+            return False, {'error': str(e)}
+
+    @classmethod
+    def create_task_comment(cls, request, task_id, comment_data):
+        """Agregar comentario a una tarea."""
+        url = f"{cls.BASE_URL}/tasks/{task_id}/comments/"
+
+        try:
+            payload = cls._jsonable(comment_data)
+            response = cls._make_request(request, 'POST', url, json=payload)
+            response.raise_for_status()
+            return True, response.json()
         except requests.exceptions.HTTPError as e:
             resp = getattr(e, 'response', None)
             if resp is not None:
