@@ -43,18 +43,14 @@ class LoginView(FormView):
             access_token = self.request.session.get('access')
             refresh_token = self.request.session.get('refresh')
 
-            print(f"✅ Access token en sesión: {access_token}")
-            print(f"✅ Refresh token en sesión: {refresh_token}")
 
             response = super().form_valid(form)
 
             # Guardar tokens en cookies para que JavaScript los acceda
             if access_token:
                 response.set_cookie('access', access_token, httponly=False, samesite='Lax', max_age=3600)
-                print(f"✅ Cookie 'access' establecida")
             if refresh_token:
                 response.set_cookie('refresh', refresh_token, httponly=False, samesite='Lax', max_age=86400)
-                print(f"✅ Cookie 'refresh' establecida")
 
             return response
 
@@ -187,9 +183,7 @@ class ProfileEditView(LoginRequiredMixin, FormView):
             messages.success(self.request, '¡Perfil actualizado exitosamente!')
             return super().form_valid(form)
 
-        messages.error(self.request, 'Error al actualizar el perfil.')
-        print("DEBUG: Datos enviados:", profile_data)
-        print("DEBUG: Respuesta de la API:", result)    
+        messages.error(self.request, 'Error al actualizar el perfil.')  
         add_form_errors(form, result)
         return self.form_invalid(form)
 

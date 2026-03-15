@@ -64,9 +64,11 @@
                     <div class="col-md-6">
                         <h6>Acciones</h6>
                         <div class="d-grid gap-2">
+                            {% if is_owner %}
                             <a class="btn btn-sm btn-outline-primary" href="{% url 'tasks:update' task.id %}">
                                 <i class="fas fa-edit"></i> Editar Tarea
                             </a>
+                            {% endif %}
                             <form method="post" action="{% url 'tasks:complete' task.id %}">
                                 {% csrf_token %}
                                 <button class="btn btn-sm btn-outline-success w-100" {% if task.status == 'completado' %}disabled{% endif %}>
@@ -79,12 +81,14 @@
                                     <i class="fas fa-sync"></i> Cambiar Estado{% if next_status_label %} ({{ next_status_label }}){% endif %}
                                 </button>
                             </form>
+                            {% if is_owner %}
                             <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
                                 {% csrf_token %}
                                 <button class="btn btn-sm btn-outline-danger w-100">
                                     <i class="fas fa-trash"></i> Eliminar Tarea
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

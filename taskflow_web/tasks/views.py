@@ -60,24 +60,41 @@ class TaskCreateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/create.html'
     form_class = TaskForm
     success_url = reverse_lazy('tasks:list')
-    
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # En creación no sabemos el proyecto hasta que el usuario lo elige;
+        # por UX, por defecto tratamos a usuarios no-owner como "no pueden asignar".
+        context['can_assign'] = True
+        return context
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        
+
         # Obtener proyectos del usuario para el formulario
         success, projects_result = API.get_projects(self.request)
         if success:
             kwargs['user_projects'] = projects_result.get('results', [])
         else:
             kwargs['user_projects'] = []
-        
-        # Obtener usuarios (por ahora usamos los miembros de proyectos)
-        kwargs['users'] = []
-        
+
+        # Para crear, no sabemos el proyecto aún (si no viene preseleccionado).
+        # El formulario debe renderizar el select vacío o con una lista general.
+        # Como mínimo, cargamos todos los usuarios para que el usuario pueda seleccionar,
+        # y el backend validará pertenencia al proyecto.
+        success, users_result = API.get_users(self.request)
+        if success:
+            kwargs['users'] = users_result if isinstance(users_result, list) else users_result.get('results', [])
+        else:
+            kwargs['users'] = []
+
         return kwargs
     
     def form_valid(self, form):
         project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
+        # En UI, solo el owner debería asignar. Como en la creación no sabemos si es owner
+        # del proyecto hasta consultar el proyecto seleccionado, dejamos que la API decida.
+        # Si quieres bloquearlo del lado web, desactiva/oculta el select en el template.
         assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
         task_data = {
             'title': form.cleaned_data['title'],
@@ -93,13 +110,50 @@ class TaskCreateView(LoginRequiredMixin, FormView):
         
         if success:
             messages.success(self.request, '¡Tarea creada exitosamente!')
-            return self.form_invalid(form)
+            return super().form_valid(form)
         
         add_form_errors(form, result)
         return self.form_invalid(form)
     
     def form_invalid(self, form):
         return super().form_invalid(form)
+
+class TaskProjectAssigneesView(LoginRequiredMixin, View):
+    """Devuelve owner+members de un proyecto para poblar el select de asignación."""
+
+    def get(self, request, *args, **kwargs):
+        project_id = kwargs.get('project_id')
+        success, project = API.get_project(request, project_id)
+        if not success:
+            redirect_response = handle_api_auth_error(request, project)
+            if redirect_response:
+                return redirect_response
+            return HttpResponse('{"success": false}', content_type='application/json', status=400)
+
+        owner = project.get('owner') if isinstance(project, dict) else None
+        members = project.get('members', []) if isinstance(project, dict) else []
+
+        assignees = []
+        if owner:
+            assignees.append(owner)
+        if isinstance(members, list):
+            assignees.extend(members)
+
+        # Respuesta mínima para el JS
+        from django.http import JsonResponse
+        data = [
+            {
+                'id': u.get('id'),
+                'username': u.get('username'),
+                'first_name': u.get('first_name'),
+                'last_name': u.get('last_name'),
+                'email': u.get('email'),
+            }
+            for u in assignees
+            if isinstance(u, dict)
+        ]
+        return JsonResponse({'success': True, 'users': data})
+
 
 class TaskDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'tasks/detail.html'
@@ -151,6 +205,12 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
 
     def _build_context(self, request, task_id, task, comment_form=None):
         context = {'task': task}
+
+        # Flags de rol para UI
+        session_user_id = request.session.get('user_data', {}).get('id')
+        owner = task.get('project_detail', {}).get('owner')
+        context['is_owner'] = bool(owner and owner.get('id') == session_user_id)
+        context['is_assigned'] = bool(task.get('assigned_to') and task.get('assigned_to', {}).get('id') == session_user_id)
         current_status = task.get('status')
         next_status = _get_next_status(current_status)
         context['next_status'] = next_status
@@ -211,11 +271,32 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
         else:
             kwargs['user_projects'] = []
 
-        success, users_result = API.get_users(self.request)
-        if success:
-            kwargs['users'] = users_result if isinstance(users_result, list) else users_result.get('results', [])
-        else:
-            kwargs['users'] = []
+        # Mostrar solo asignables del proyecto (owner + members)
+        task = getattr(self, 'task', None)
+        if not task:
+            task_id = self.kwargs.get('pk')
+            success_task, task = API.get_task(self.request, task_id)
+            if success_task:
+                self.task = task
+
+        users = []
+        project_detail = getattr(self, 'task', {}) or {}
+        project_detail = project_detail.get('project_detail') if isinstance(project_detail, dict) else None
+        project_id = project_detail.get('id') if isinstance(project_detail, dict) else None
+
+        if project_id:
+            success_p, project = API.get_project(self.request, project_id)
+            if success_p and isinstance(project, dict):
+                owner = project.get('owner')
+                members = project.get('members', [])
+                # normalizar
+                if owner:
+                    users.append(owner)
+                if isinstance(members, list):
+                    users.extend(members)
+
+        # fallback si no se pudo resolver: lista vacía (evita mostrar todos)
+        kwargs['users'] = users
 
         return kwargs
     
@@ -237,6 +318,10 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
 
         context['task'] = self.task
 
+        # Bandera para UI: solo el owner del proyecto puede editar todos los campos
+        owner = self.task.get('project_detail', {}).get('owner')
+        context['is_owner'] = bool(owner and owner.get('id') == self.request.session.get('user_data', {}).get('id'))
+
         if 'form' not in kwargs:
             form = self.get_form()
             assigned_to = self.task.get('assigned_to')
@@ -257,8 +342,6 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         task_id = self.kwargs.get('pk')
-        project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
-        assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
 
         if not hasattr(self, 'task'):
             success, task = API.get_task(self.request, task_id)
@@ -267,15 +350,26 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
                 return redirect('tasks:list')
             self.task = task
 
-        task_data = {
-            'title': form.cleaned_data['title'],
-            'description': form.cleaned_data['description'],
-            'project': project_id,
-            'assigned_to_id': assigned_to_id,
-            'status': form.cleaned_data['status'],
-            'priority': form.cleaned_data['priority'],
-            'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
-        }
+        owner = self.task.get('project_detail', {}).get('owner')
+        is_owner = bool(owner and owner.get('id') == self.request.session.get('user_data', {}).get('id'))
+
+        # Si NO es owner, solo permitir cambio de estado (la API ya lo aplica, aquí evitamos UX mala)
+        if not is_owner:
+            task_data = {
+                'status': form.cleaned_data['status'],
+            }
+        else:
+            project_id = int(form.cleaned_data['project']) if form.cleaned_data['project'] else None
+            assigned_to_id = int(form.cleaned_data['assigned_to']) if form.cleaned_data['assigned_to'] else None
+            task_data = {
+                'title': form.cleaned_data['title'],
+                'description': form.cleaned_data['description'],
+                'project': project_id,
+                'assigned_to_id': assigned_to_id,
+                'status': form.cleaned_data['status'],
+                'priority': form.cleaned_data['priority'],
+                'due_date': form.cleaned_data['due_date'].isoformat() if form.cleaned_data['due_date'] else None,
+            }
 
         success, result = API.update_task(self.request, task_id, task_data)
 

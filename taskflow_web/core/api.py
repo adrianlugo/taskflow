@@ -521,38 +521,26 @@ class API:
         """Obtener lista de todos los usuarios."""
         # Si no hay token, no intentes llamar a la API
         if not request.session.get('access'):
-            print("DEBUG API: No hay token en sesión, no se puede obtener usuarios.")
             return False, {'error': 'No autenticado'}
         
         url = f"{cls.BASE_URL}/auth/users/"
-        print(f"DEBUG API: Llamando a {url}")
         
         # Verificar headers que se enviarán
         headers = cls._get_headers(request)
-        print(f"DEBUG API: Headers: {headers}")
         
         try:
-            print(f"DEBUG API: Haciendo request GET...")
             response = cls._make_request(request, 'GET', url)
-            print(f"DEBUG API: Response status: {response.status_code}")
-            print(f"DEBUG API: Response headers: {dict(response.headers)}")
-            print(f"DEBUG API: Response text: {response.text[:200]}...")
             
             response.raise_for_status()
             result = response.json()
-            print(f"DEBUG API: Response JSON: {result}")
             
             # Devolver solo la lista de resultados
             if 'results' in result:
-                print(f"DEBUG API: Devolviendo {len(result['results'])} usuarios")
                 return True, result['results']
             else:
-                print(f"DEBUG API: Devolviendo resultado directo: {len(result) if isinstance(result, list) else 'No es lista'}")
                 return True, result
                 
         except requests.exceptions.RequestException as e:
-            print(f"DEBUG API: Error en request: {str(e)}")
-            print(f"DEBUG API: Tipo de error: {type(e)}")
             return False, {'error': f'Error obteniendo usuarios: {str(e)}'}
 
     @classmethod

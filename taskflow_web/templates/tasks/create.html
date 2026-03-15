@@ -50,6 +50,7 @@
                             {% endif %}
                         </div>
                         
+                        {% if can_assign %}
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
                                 {{ form.assigned_to.label }}
@@ -61,6 +62,7 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                     
                     <div class="row">
@@ -114,4 +116,64 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const projectSelect = document.getElementById("{{ form.project.id_for_label }}");
+  const assignedSelect = document.getElementById("{{ form.assigned_to.id_for_label }}");
+
+  // Django renderiza selects con id="id_<fieldname>" normalmente; por si acaso fallback:
+  const projectEl = projectSelect || document.getElementById('id_project');
+  const assignedEl = assignedSelect || document.getElementById('id_assigned_to');
+
+  if (!projectEl || !assignedEl) return;
+
+  function setOptions(users) {
+    assignedEl.innerHTML = '';
+    const noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = 'Sin asignar';
+    assignedEl.appendChild(noneOpt);
+
+    for (const u of users) {
+      const opt = document.createElement('option');
+      opt.value = String(u.id);
+      opt.textContent = u.username || ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || ('Usuario #' + u.id);
+      assignedEl.appendChild(opt);
+    }
+  }
+
+  async function loadAssignees(projectId) {
+    if (!projectId) {
+      setOptions([]);
+      return;
+    }
+
+    assignedEl.disabled = true;
+    try {
+      const url = "{% url 'tasks:project-assignees' 0 %}".replace('/0/', '/' + projectId + '/');
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const data = await res.json();
+      if (data && data.success) {
+        setOptions(data.users || []);
+      } else {
+        setOptions([]);
+      }
+    } catch (e) {
+      setOptions([]);
+    } finally {
+      assignedEl.disabled = false;
+    }
+  }
+
+  projectEl.addEventListener('change', (e) => loadAssignees(e.target.value));
+
+  // Si viene preseleccionado por querystring (?project=)
+  if (projectEl.value) {
+    loadAssignees(projectEl.value);
+  }
+})();
+</script>
 {% endblock %}

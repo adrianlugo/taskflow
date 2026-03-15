@@ -77,13 +77,53 @@ class TaskListCreateView(generics.ListCreateAPIView):
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         return Task.objects.filter(
-            models.Q(project__owner=self.request.user) | 
+            models.Q(project__owner=self.request.user) |
             models.Q(project__members=self.request.user) |
             models.Q(assigned_to=self.request.user)
         ).distinct()
+
+    def perform_update(self, serializer):
+        """
+        Reglas tipo Trello/Asana:
+        - Owner del proyecto: puede editar cualquier campo de la tarea.
+        - Miembro: puede cambiar SOLO el estado y SOLO si la tarea está asignada a él.
+        - Asignación/reasignación se controla en el serializer (assigned_to_id solo owner).
+        """
+        task = self.get_object()
+        project = task.project
+        user = self.request.user
+
+        if user == project.owner:
+            serializer.save()
+            return
+
+        # Si no es owner, debe ser miembro o asignado (ya filtrado por queryset),
+        # pero solo permitimos cambiar status si está asignado a él.
+        if task.assigned_to_id != user.id:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo puedes actualizar el estado de tareas asignadas a ti")
+
+        # Permitir únicamente el cambio de status (y cualquier campo read-only será ignorado).
+        allowed_fields = {"status"}
+        sent_fields = set(getattr(self.request, "data", {}).keys())
+        # Si el request trae cualquier otro campo además de status, bloquear.
+        # (assigned_to_id también queda bloqueado aquí para miembros)
+        extra_fields = {f for f in sent_fields if f not in allowed_fields}
+        if extra_fields:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Como miembro solo puedes cambiar el estado de la tarea")
+
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Solo el owner puede eliminar tareas del proyecto."""
+        if self.request.user != instance.project.owner:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo el propietario del proyecto puede eliminar tareas")
+        instance.delete()
     
     @extend_schema(
         summary="Actualizar tarea",

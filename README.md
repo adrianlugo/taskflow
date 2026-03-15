@@ -32,16 +32,17 @@ Sistema de gestión de proyectos y tareas con arquitectura de microservicios, fr
 
 ### 📊 Gestión de Proyectos
 - **CRUD completo** de proyectos
-- **Asignación de miembros** por username
-- **Filtro de usuarios** en tiempo real
-- **Permisos basados en ownership**
+- **Asignación de miembros** (solo el owner)
+- **Filtro de usuarios** en tiempo real (usuarios disponibles)
+- **Permisos Owner vs Member** (estilo Trello/Asana)
 - **Dashboard con estadísticas**
-### Gestion de Tareas
+
+### ✅ Gestión de Tareas
 - **CRUD completo** de tareas
-- **Estados de tarea** (por hacer, en progreso, revision, completado)
-- **Marcar como completada** con fecha automatica
-**Comentarios integrados** en el detalle de la tarea para registrar avances y retroalimentación
-- **Asignacion de tarea** a usuarios
+- **Estados de tarea** (por hacer, en progreso, revisión, completado)
+- **Marcar como completada** con fecha automática
+- **Comentarios integrados** en el detalle de la tarea
+- **Asignación de tarea** a usuarios del proyecto (owner + miembros)
 
 ### 👥 Gestión de Miembros
 - **Selector de usuarios** con búsqueda y filtro
@@ -214,13 +215,14 @@ PATCH /api/auth/profile/     # Actualizar perfil
 
 ### Proyectos
 ```
-GET    /api/projects/                # Listar proyectos
-POST   /api/projects/                # Crear proyecto
-GET    /api/projects/{id}/           # Ver proyecto
-PATCH  /api/projects/{id}/           # Actualizar proyecto
-DELETE /api/projects/{id}/           # Eliminar proyecto
-POST   /api/projects/{id}/members/   # Agregar miembro
-DELETE /api/projects/{id}/members/{user_id}/  # Eliminar miembro
+GET    /api/projects/                          # Listar proyectos (owner o miembro)
+POST   /api/projects/                          # Crear proyecto (owner=usuario actual)
+GET    /api/projects/{id}/                     # Ver proyecto (owner o miembro)
+PATCH  /api/projects/{id}/                     # Actualizar proyecto (solo owner)
+DELETE /api/projects/{id}/                     # Eliminar proyecto (solo owner)
+POST   /api/projects/{id}/members/             # Agregar miembro (solo owner)
+DELETE /api/projects/{id}/members/{user_id}/   # Eliminar miembro (solo owner)
+GET    /api/projects/{id}/members/list/        # Usuarios disponibles (solo owner)
 ```
 
 ### Usuarios
@@ -231,15 +233,17 @@ GET /api/auth/users/{id}/       # Ver usuario
 
 ### Tareas
 ```
-GET    /api/tasks/              # Listar tareas
-POST   /api/tasks/              # Crear tarea
-GET    /api/tasks/{id}/         # Ver tarea
-PATCH  /api/tasks/{id}/         # Actualizar tarea
-DELETE /api/tasks/{id}/         # Eliminar tarea
-POST   /api/tasks/{id}/assign/  # Asignar tarea
-GET    /api/tasks/{id}/comments/        # Listar comentarios
-POST   /api/tasks/{id}/comments/       # Crear comentario
+GET    /api/tasks/                       # Listar tareas (owner/miembro/asignado)
+POST   /api/tasks/                       # Crear tarea (owner o miembro del proyecto)
+GET    /api/tasks/{id}/                  # Ver tarea (owner/miembro/asignado)
+PATCH  /api/tasks/{id}/                  # Actualizar tarea (owner: todo / member: solo status y si está asignado)
+DELETE /api/tasks/{id}/                  # Eliminar tarea (solo owner)
+GET    /api/tasks/{id}/comments/         # Listar comentarios
+POST   /api/tasks/{id}/comments/         # Crear comentario
 ```
+
+> Nota: la asignación/reasignación se realiza enviando `assigned_to_id` en el PATCH/POST de tareas.
+> Solo se puede asignar a usuarios que pertenezcan al proyecto.
 
 ## 🎯 Funcionalidades Detalladas
 
@@ -258,8 +262,10 @@ POST   /api/tasks/{id}/comments/       # Crear comentario
 ### 🏗️ Gestión de Proyectos
 - **CRUD completo**: Crear, leer, actualizar, eliminar
 - **Formularios validados**: Validación frontend y backend
-- **Permisos de ownership**: Solo el owner puede editar/eliminar
-- **Asignación de miembros**: Sistema de selección con filtro
+- **Permisos Owner vs Member**:
+  - **Owner**: edita/elimina proyecto, gestiona miembros.
+  - **Member**: solo lectura del proyecto.
+- **Asignación de miembros**: sistema de selección con filtro (usuarios disponibles)
 
 ### 👥 Sistema de Miembros
 - **Selector inteligente**: Lista desplegable con búsqueda

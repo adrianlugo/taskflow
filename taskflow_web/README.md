@@ -8,11 +8,12 @@ Este proyecto consume la API REST de `taskflow-api` para autenticación, proyect
 - Inicio de sesion y registro de usuarios.
 - Gestion de perfil de usuario.
 - Dashboard con resumen de proyectos y tareas.
-- CRUD de proyectos.
-- Gestion de miembros por proyecto.
-- CRUD de tareas.
+- CRUD de proyectos (solo owner puede editar/eliminar).
+- Gestion de miembros por proyecto (solo owner agrega/elimina miembros).
+- CRUD de tareas (owner edita todo; member solo cambia estado si la tarea está asignada).
 - Comentarios en el detalle de tarea con historial y formulario integrado.
 - Cambio rapido de estado de tareas (flujo por columnas).
+- Asignación de tareas: en create/update el selector se limita a owner+miembros del proyecto.
 - Mensajeria de estado con `django.contrib.messages`.
 
 ## Stack Tecnologico
@@ -109,10 +110,24 @@ Accede en:
 - `/projects/create/` Crear proyecto
 - `/tasks/` Lista de tareas
 - `/tasks/create/` Crear tarea
+- `/tasks/project/<project_id>/assignees/` JSON (owner+members) para poblar “Asignar a” al seleccionar proyecto
 
 ## Integracion con API
 
 La comunicacion con el backend se centraliza en `taskflow_web/core/api.py`.
+
+### Permisos (Owner vs Member)
+
+- **Owner**
+  - Puede editar/eliminar proyectos.
+  - Puede agregar/eliminar miembros del proyecto.
+  - Puede editar cualquier campo de las tareas y asignar/reasignar.
+- **Member**
+  - Puede ver el proyecto y sus tareas.
+  - Puede comentar.
+  - Solo puede cambiar el **estado** de tareas **asignadas a él**.
+
+> La UI oculta botones de edición/eliminación para miembros, pero la seguridad final se aplica en la API.
 
 - Se usan tokens JWT almacenados en sesion.
 - Si el `access token` expira, se intenta refresh automatico.

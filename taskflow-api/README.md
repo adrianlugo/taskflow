@@ -162,15 +162,22 @@ curl http://127.0.0.1:8000/health/
 
 #### 📋 Proyectos
 - `GET/POST /api/projects/` - Listar/Crear proyectos
-- `GET/PUT/PATCH/DELETE /api/projects/{id}/` - Gestión de proyecto
-- `POST /api/projects/{id}/members/` - Agregar miembro
-- `DELETE /api/projects/{id}/members/{user_id}/` - Eliminar miembro
+- `GET /api/projects/{id}/` - Ver proyecto (owner o miembro)
+- `PUT/PATCH/DELETE /api/projects/{id}/` - Editar/Eliminar proyecto (solo owner)
+- `POST /api/projects/{id}/members/` - Agregar miembro (solo owner)
+- `DELETE /api/projects/{id}/members/{user_id}/` - Eliminar miembro (solo owner)
+- `GET /api/projects/{id}/members/list/` - Usuarios disponibles (solo owner)
 
 #### ✅ Tareas
 - `GET/POST /api/tasks/` - Listar/Crear tareas
-- `GET/PUT/PATCH/DELETE /api/tasks/{id}/` - Gestión de tarea
+- `GET /api/tasks/{id}/` - Ver tarea
+- `PUT/PATCH /api/tasks/{id}/` - Editar tarea
+  - Owner: puede editar cualquier campo.
+  - Member: solo puede cambiar `status` si la tarea está asignada a él.
+- `DELETE /api/tasks/{id}/` - Eliminar tarea (solo owner)
 - `GET/POST /api/tasks/{id}/comments/` - Comentarios
-- `POST /api/tasks/{id}/assign/` - Asignar tarea
+
+> Asignación: enviar `assigned_to_id` en POST/PATCH de tareas. Solo se puede asignar a owner/miembros del proyecto.
 
 ## 🔐 Autenticación
 
@@ -235,9 +242,9 @@ curl -X POST http://127.0.0.1:8000/api/tasks/ \
     "title": "Nueva Tarea",
     "description": "Descripción de la tarea",
     "project": 1,
-    "assigned_to": 2,
-    "status": "todo",
-    "priority": "medium"
+    "assigned_to_id": 2,
+    "status": "por_hacer",
+    "priority": "media"
   }'
 ```
 

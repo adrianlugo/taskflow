@@ -57,12 +57,28 @@ class ProjectListCreateView(generics.ListCreateAPIView):
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
+        # Cualq""" u """ier owner/miembro puede ver el proyecto.
         return Project.objects.filter(
-            models.Q(owner=self.request.user) | 
+            models.Q(owner=self.request.user) |
             models.Q(members=self.request.user)
         ).distinct()
+
+    def perform_update(self, serializer):
+        # Solo el propietario puede editar el proyecto (estilo Trello/Jira).
+        project = self.get_object()
+        if project.owner != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo el propietario del proyecto puede editarlo")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        # Solo el propietario puede eliminar el proyecto.
+        if instance.owner != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo el propietario del proyecto puede eliminarlo")
+        instance.delete()
     
     @extend_schema(
         summary="Actualizar proyecto",

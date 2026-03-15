@@ -14,6 +14,9 @@ class ProjectListView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = {}
 
+        # Usuario actual (guardado en sesión al hacer login contra la API)
+        context['user'] = request.session.get('user_data', {})
+
         # Obtener proyectos del usuario
         success, projects_result = API.get_projects(request)
         if success:
@@ -83,6 +86,28 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
     template_name = 'projects/update.html'
     form_class = ProjectForm
     success_url = reverse_lazy('projects:list')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Bloquear UI de edición para miembros: solo owner puede editar proyectos."""
+        project_id = kwargs.get('pk')
+        success, project = API.get_project(request, project_id)
+        if not success:
+            redirect_response = handle_api_auth_error(request, project)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, 'Error al cargar el proyecto.')
+            return redirect('projects:list')
+
+        session_user_id = request.session.get('user_data', {}).get('id')
+        owner = project.get('owner')
+        owner_id = owner.get('id') if isinstance(owner, dict) else owner
+
+        if owner_id != session_user_id:
+            messages.error(request, 'Solo el propietario del proyecto puede editarlo.')
+            return redirect('projects:detail', pk=project_id)
+
+        self.project = project
+        return super().dispatch(request, *args, **kwargs)
     
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -168,12 +193,21 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
         return super().form_invalid(form)
 
 class AddProjectMemberView(LoginRequiredMixin, TemplateView):
-    def get(self, request, project_id): 
-        """ Devuelve la lista de usuarios disponibles para agregar al proyecto """ 
-        success, result = API.get_users(request)
-        if not success:
-            return JsonResponse({'success': False, 'error': result.get('error', 'Error cargando usuarios')}) 
-        return JsonResponse({'success': True, 'users': result})
+    def get(self, request, project_id):
+        """Devuelve la lista de usuarios disponibles para agregar al proyecto (solo owner)."""
+        # Endpoint real en la API: /projects/<project_id>/members/list/
+        url = f"{API.BASE_URL}/projects/{project_id}/members/list/"
+        try:
+            response = API._make_request(request, 'GET', url)
+            response.raise_for_status()
+            data = response.json()
+            # La API responde: {success: true, users: [...]}
+            if isinstance(data, dict) and data.get('success'):
+                return JsonResponse({'success': True, 'users': data.get('users', [])})
+            # fallback defensivo
+            return JsonResponse({'success': True, 'users': data.get('users', []) if isinstance(data, dict) else data})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': f'Error cargando usuarios: {str(e)}'}, status=400)
     
     def post(self, request, project_id): 
         """ Agrega un miembro al proyecto """ 
