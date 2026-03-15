@@ -85,7 +85,13 @@ class ProjectCreateView(LoginRequiredMixin, FormView):
 class ProjectUpdateView(LoginRequiredMixin, FormView):
     template_name = 'projects/update.html'
     form_class = ProjectForm
-    success_url = reverse_lazy('projects:list')
+
+    def get_success_url(self):
+        # Redirigir a 'next' si existe y es válido, de lo contrario a la lista
+        next_url = self.request.POST.get('next')
+        if next_url and next_url.startswith('/'):
+            return next_url
+        return reverse_lazy('projects:list')
 
     def dispatch(self, request, *args, **kwargs):
         """Bloquear UI de edición para miembros: solo owner puede editar proyectos."""
@@ -139,6 +145,16 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
             self.project = project
         
         context['project'] = self.project
+        
+        # Capturar la URL anterior (Referer) o mantener 'next' actual de GET
+        next_url = self.request.GET.get('next') or self.request.META.get('HTTP_REFERER')
+        if next_url and next_url.startswith('http'):
+            # Seguridad básica: solo usar rutas relativas para evitar redirect abierto
+            from urllib.parse import urlparse
+            parsed = urlparse(next_url)
+            next_url = parsed.path + ('?' + parsed.query if parsed.query else '')
+            
+        context['next_url'] = next_url
         
         # Pre-cargar el formulario con datos actuales
         if 'form' not in kwargs:

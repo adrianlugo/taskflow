@@ -3,6 +3,7 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block auth_content %}
+{% load task_extras %}
 <!-- Stats Cards -->
 <div class="row mb-4">
     <div class="col-md-4">
@@ -78,7 +79,7 @@
                                 <small class="text-muted">{{ project.description|truncatewords:10 }}</small>
                             </div>
                             <div class="text-end">
-                                <span class="badge bg-{{ project.status|default:'secondary' }}">
+                                <span class="badge bg-{{ project.status|status_color }}">
                                     {{ project.status|title }}
                                 </span>
                                 <br>
@@ -123,7 +124,7 @@
                                     <small class="text-muted">{{ task.project_detail.name }}</small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge bg-{{ task.status|default:'secondary' }}">
+                                    <span class="badge bg-{{ task.status|status_color }}">
                                         {{ task.status|title }}
                                     </span>
                                 </div>

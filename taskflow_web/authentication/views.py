@@ -81,7 +81,7 @@ class RegisterView(FormView):
             'username': form.cleaned_data['username'],
             'email': form.cleaned_data['email'],
             'password': form.cleaned_data['password'],
-            'confirm_password': form.cleaned_data['confirm_password'],
+            'password_confirm': form.cleaned_data['confirm_password'],
             'first_name': form.cleaned_data['first_name'],
             'last_name': form.cleaned_data['last_name'],
         }

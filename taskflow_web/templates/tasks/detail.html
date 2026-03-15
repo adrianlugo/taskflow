@@ -4,6 +4,7 @@
 {% block page_title %}Detalle de las Tareas{% endblock %}
 
 {% block auth_content %}
+{% load task_extras %}
 {% if task %}
 <div class="row">
     <div class="col-md-8">
@@ -11,10 +12,10 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">{{ task.title }}</h4>
                 <div>
-                    <span class="badge bg-{{ task.status|default:'secondary' }} me-1">
+                    <span class="badge bg-{{ task.status|status_color }} me-1">
                         {{ task.status|title }}
                     </span>
-                    <span class="badge bg-{{ task.priority|default:'secondary' }}">
+                    <span class="badge bg-{{ task.priority|priority_color }}">
                         {{ task.priority|title }}
                     </span>
                 </div>
@@ -69,6 +70,8 @@
                                 <i class="fas fa-edit"></i> Editar Tarea
                             </a>
                             {% endif %}
+                            
+                            {% if is_owner or is_assigned %}
                             <form method="post" action="{% url 'tasks:complete' task.id %}">
                                 {% csrf_token %}
                                 <button class="btn btn-sm btn-outline-success w-100" {% if task.status == 'completado' %}disabled{% endif %}>
@@ -81,6 +84,8 @@
                                     <i class="fas fa-sync"></i> Cambiar Estado{% if next_status_label %} ({{ next_status_label }}){% endif %}
                                 </button>
                             </form>
+                            {% endif %}
+                            
                             {% if is_owner %}
                             <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
                                 {% csrf_token %}

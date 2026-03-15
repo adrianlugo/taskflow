@@ -1,6 +1,7 @@
 {% extends 'tasks/base.html' %}
 
 {% block auth_content %}
+{% load task_extras %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>
@@ -39,10 +40,10 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h6 class="card-title">{{ task.title }}</h6>
                         <div>
-                            <span class="badge bg-{{ task.status|default:'secondary' }} me-1">
+                            <span class="badge bg-{{ task.status|status_color }} me-1">
                                 {{ task.status|title }}
                             </span>
-                            <span class="badge bg-{{ task.priority|default:'secondary' }}">
+                            <span class="badge bg-{{ task.priority|priority_color }}">
                                 {{ task.priority|title }}
                             </span>
                         </div>
@@ -75,21 +76,27 @@
                         <a href="{% url 'tasks:detail' task.id %}" class="btn btn-outline-primary">
                             <i class="fas fa-eye"></i> Ver
                         </a>
+                        {% if task.is_owner %}
                         <a href="{% url 'tasks:update' task.id %}" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <form method="post" action="{% url 'tasks:complete' task.id %}">
+                        {% endif %}
+                        {% if task.is_owner or task.is_assigned %}
+                        <form method="post" action="{% url 'tasks:complete' task.id %}" class="m-0 p-0 d-inline-block" style="width: auto;">
                                 {% csrf_token %}
-                                <button class="btn btn-sm btn-outline-success w-100" {% if task.status == 'completado' %}disabled{% endif %}>
+                                <button class="btn btn-sm btn-outline-success h-100 rounded-0" {% if task.status == 'completado' %}disabled{% endif %} style="border-radius: 0;">
                                     <i class="fas fa-check"></i> Completada
                                 </button>
-                            </form>
-                        <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');">
+                        </form>
+                        {% endif %}
+                        {% if task.is_owner %}
+                        <form method="post" action="{% url 'tasks:delete' task.id %}" onsubmit="return confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.');" class="m-0 p-0 d-inline-block" style="width: auto;">
                                 {% csrf_token %}
-                                <button class="btn btn-sm btn-outline-danger w-100">
+                                <button class="btn btn-sm btn-outline-danger h-100 rounded-start-0" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </button>
-                            </form>
+                        </form>
+                        {% endif %}
                     </div>
                 </div>
                 

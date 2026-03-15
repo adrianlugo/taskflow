@@ -44,7 +44,22 @@ class TaskListView(LoginRequiredMixin, TemplateView):
         project_id = request.GET.get('project')
         success, tasks_result = API.get_tasks(request, project_id)
         if success:
-            context['tasks'] = tasks_result.get('results', [])
+            tasks_list = tasks_result.get('results', [])
+            
+            # Anotar permisos en cada tarea para el template
+            session_user_id = request.session.get('user_data', {}).get('id')
+            for task in tasks_list:
+                owner = task.get('project_detail', {}).get('owner')
+                created_by = task.get('created_by')
+                assigned_to = task.get('assigned_to')
+                
+                is_project_owner = bool(owner and owner.get('id') == session_user_id)
+                is_task_creator = bool(created_by and created_by.get('id') == session_user_id)
+                
+                task['is_owner'] = is_project_owner or is_task_creator
+                task['is_assigned'] = bool(assigned_to and assigned_to.get('id') == session_user_id)
+                
+            context['tasks'] = tasks_list
             context['tasks_count'] = tasks_result.get('count', 0)
         else:
             redirect_response = handle_api_auth_error(request, tasks_result)
@@ -60,6 +75,24 @@ class TaskCreateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/create.html'
     form_class = TaskForm
     success_url = reverse_lazy('tasks:list')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Antes de mostrar el formulario, verificar si el usuario tiene proyectos
+        success, projects_result = API.get_projects(request)
+        if success:
+            projects = projects_result.get('results', [])
+            if not projects:
+                messages.warning(request, 'Debes crear al menos un proyecto antes de poder crear tareas.')
+                return redirect('projects:create')
+        else:
+            # Si el API falla, manejamos el error (ej: re-autenticar)
+            redirect_response = handle_api_auth_error(request, projects_result)
+            if redirect_response:
+                return redirect_response
+            messages.error(request, 'No pudimos verificar tus proyectos. Por favor, intenta de nuevo.')
+            return redirect('tasks:list')
+            
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -133,11 +166,16 @@ class TaskProjectAssigneesView(LoginRequiredMixin, View):
         owner = project.get('owner') if isinstance(project, dict) else None
         members = project.get('members', []) if isinstance(project, dict) else []
 
-        assignees = []
-        if owner:
-            assignees.append(owner)
+        # Evitar duplicados usando un diccionario por ID
+        unique_assignees = {}
+        if owner and isinstance(owner, dict) and 'id' in owner:
+            unique_assignees[owner['id']] = owner
         if isinstance(members, list):
-            assignees.extend(members)
+            for m in members:
+                if isinstance(m, dict) and 'id' in m:
+                    unique_assignees[m['id']] = m
+                    
+        assignees = list(unique_assignees.values())
 
         # Respuesta mínima para el JS
         from django.http import JsonResponse
@@ -209,7 +247,13 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
         # Flags de rol para UI
         session_user_id = request.session.get('user_data', {}).get('id')
         owner = task.get('project_detail', {}).get('owner')
-        context['is_owner'] = bool(owner and owner.get('id') == session_user_id)
+        created_by = task.get('created_by')
+
+        # Se tiene permiso "total" si es dueño del proyecto o si él mismo creó la tarea
+        is_project_owner = bool(owner and owner.get('id') == session_user_id)
+        is_task_creator = bool(created_by and created_by.get('id') == session_user_id)
+        
+        context['is_owner'] = is_project_owner or is_task_creator
         context['is_assigned'] = bool(task.get('assigned_to') and task.get('assigned_to', {}).get('id') == session_user_id)
         current_status = task.get('status')
         next_status = _get_next_status(current_status)
@@ -245,7 +289,12 @@ class TaskDetailView(LoginRequiredMixin, TemplateView):
 class TaskUpdateView(LoginRequiredMixin, FormView):
     template_name = 'tasks/update.html'
     form_class = TaskForm
-    success_url = reverse_lazy('tasks:list')
+
+    def get_success_url(self):
+        next_url = self.request.POST.get('next')
+        if next_url and next_url.startswith('/'):
+            return next_url
+        return reverse_lazy('tasks:list')
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -287,13 +336,18 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
         if project_id:
             success_p, project = API.get_project(self.request, project_id)
             if success_p and isinstance(project, dict):
+                unique_users = {}
                 owner = project.get('owner')
                 members = project.get('members', [])
-                # normalizar
-                if owner:
-                    users.append(owner)
+                
+                if owner and isinstance(owner, dict) and 'id' in owner:
+                    unique_users[owner['id']] = owner
                 if isinstance(members, list):
-                    users.extend(members)
+                    for m in members:
+                        if isinstance(m, dict) and 'id' in m:
+                            unique_users[m['id']] = m
+                            
+                users = list(unique_users.values())
 
         # fallback si no se pudo resolver: lista vacía (evita mostrar todos)
         kwargs['users'] = users
@@ -318,9 +372,25 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
 
         context['task'] = self.task
 
-        # Bandera para UI: solo el owner del proyecto puede editar todos los campos
+        # Bandera para UI: owner del proyecto o creador de la tarea tienen permisos de edición
+        session_user_id = self.request.session.get('user_data', {}).get('id')
         owner = self.task.get('project_detail', {}).get('owner')
-        context['is_owner'] = bool(owner and owner.get('id') == self.request.session.get('user_data', {}).get('id'))
+        created_by = self.task.get('created_by')
+
+        is_project_owner = bool(owner and owner.get('id') == session_user_id)
+        is_task_creator = bool(created_by and created_by.get('id') == session_user_id)
+        
+        context['is_owner'] = is_project_owner or is_task_creator
+
+        # Capturar la URL anterior (Referer) o mantener 'next' actual de GET
+        next_url = self.request.GET.get('next') or self.request.META.get('HTTP_REFERER')
+        if next_url and next_url.startswith('http'):
+            # Seguridad básica: solo usar rutas relativas para evitar redirect abierto
+            from urllib.parse import urlparse
+            parsed = urlparse(next_url)
+            next_url = parsed.path + ('?' + parsed.query if parsed.query else '')
+
+        context['next_url'] = next_url
 
         if 'form' not in kwargs:
             form = self.get_form()
@@ -351,10 +421,15 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
             self.task = task
 
         owner = self.task.get('project_detail', {}).get('owner')
-        is_owner = bool(owner and owner.get('id') == self.request.session.get('user_data', {}).get('id'))
+        created_by = self.task.get('created_by')
+        session_user_id = self.request.session.get('user_data', {}).get('id')
+        
+        is_project_owner = bool(owner and owner.get('id') == session_user_id)
+        is_task_creator = bool(created_by and created_by.get('id') == session_user_id)
+        has_full_permissions = is_project_owner or is_task_creator
 
-        # Si NO es owner, solo permitir cambio de estado (la API ya lo aplica, aquí evitamos UX mala)
-        if not is_owner:
+        # Si no tiene permisos completos, solo permitir cambio de estado (Asignados)
+        if not has_full_permissions:
             task_data = {
                 'status': form.cleaned_data['status'],
             }

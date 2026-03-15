@@ -5,7 +5,11 @@
     <h2>
         <i class="fas fa-edit"></i> Editar Tarea
     </h2>
-    {% if task and task.id %}
+    {% if next_url %}
+        <a href="{{ next_url }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    {% elif task and task.id %}
         <a href="{% url 'tasks:detail' task.id %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
@@ -25,6 +29,19 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    {% if next_url %}
+                        <input type="hidden" name="next" value="{{ next_url }}">
+                    {% endif %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger p-2 small">
+                        <ul class="mb-0 ps-3">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                     
                     {% if is_owner %}
                     <div class="mb-3">
@@ -127,9 +144,15 @@
                     {% endif %}
                     
                     <div class="d-flex justify-content-between">
+                        {% if next_url %}
+                        <a href="{{ next_url }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        {% else %}
                         <a href="{% url 'tasks:list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Cancelar
                         </a>
+                        {% endif %}
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Guardar Cambios
                         </button>
@@ -138,20 +161,19 @@
             </div>
         </div>
     </div>
-    
-    <!--<div class="col-md-4">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Detalles Actuales</h5>
             </div>
             <div class="card-body">
-                <p><strong>Owner:</strong> {{ task.owner.username }}</p>
-                <p><strong>Miembros:</strong> {{ task.comment|length }}</p>
+                <p><strong>Creador:</strong> {{ task.created_by.username }}</p>
+                <p><strong>Comentarios:</strong> {{ task.comments|length }}</p>
                 <p><strong>Creado:</strong> {{ task.created_at|slice:":10" }}</p>
                 <p><strong>Actualizado:</strong> {{ task.updated_at|slice:":10" }}</p>
             </div>
         </div>
-    </div> -->
+    </div>
 </div>
 {% endblock %}
 

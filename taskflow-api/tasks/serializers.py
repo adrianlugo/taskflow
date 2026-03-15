@@ -74,11 +74,11 @@ class TaskSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         assigned_to_id = validated_data.pop('assigned_to_id', None)
 
-        # Si se cambia la asignación, validar permisos (estilo Trello/Jira: solo owner asigna)
+        # Si se cambia la asignación, validar permisos: owner del proyecto o creador
         if assigned_to_id is not None and request:
             project = instance.project
-            if request.user != project.owner:
-                raise serializers.ValidationError("Solo el propietario del proyecto puede asignar o reasignar tareas")
+            if request.user != project.owner and request.user != instance.created_by:
+                raise serializers.ValidationError({"assigned_to_id": "Solo el propietario del proyecto o el creador de la tarea pueden asignar o reasignar tareas"})
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
