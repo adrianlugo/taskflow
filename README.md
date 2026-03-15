@@ -62,10 +62,9 @@ Sistema de gestión de proyectos y tareas con arquitectura de microservicios, fr
 ```
 taskflow-main/
 ├── taskflow-api/          # API REST Backend
-│   ├── authentication/    # Autenticación JWT
+│   ├── authentication/    # Autenticación JWT y Gestión de usuarios
 │   ├── projects/          # Gestión de proyectos
-│   ├── tasks/            # Gestión de tareas
-│   └── users/            # Gestión de usuarios
+│   └── tasks/             # Gestión de tareas
 ├── taskflow_web/         # Frontend Django
 │   ├── authentication/   # Vistas de autenticación
 │   ├── dashboard/        # Dashboard principal
@@ -209,8 +208,9 @@ python manage.py runserver 8001
 POST /api/auth/register/     # Registro de usuario
 POST /api/auth/login/        # Login de usuario
 POST /api/auth/refresh/      # Refresh token
-GET  /api/auth/profile/      # Perfil de usuario
-PATCH /api/auth/profile/     # Actualizar perfil
+GET  /api/auth/user/         # Obtener datos del usuario actual
+GET  /api/auth/profile/      # Perfil de usuario extendido
+PATCH /api/auth/profile/     # Actualizar perfil extendido
 ```
 
 ### Proyectos
@@ -227,8 +227,7 @@ GET    /api/projects/{id}/members/list/        # Usuarios disponibles (solo owne
 
 ### Usuarios
 ```
-GET /api/auth/users/            # Listar usuarios
-GET /api/auth/users/{id}/       # Ver usuario
+GET /api/auth/users/            # Listar todos los usuarios
 ```
 
 ### Tareas
@@ -238,11 +237,12 @@ POST   /api/tasks/                       # Crear tarea (owner o miembro del proy
 GET    /api/tasks/{id}/                  # Ver tarea (owner/miembro/asignado)
 PATCH  /api/tasks/{id}/                  # Actualizar tarea (owner: todo / member: solo status y si está asignado)
 DELETE /api/tasks/{id}/                  # Eliminar tarea (solo owner)
+POST   /api/tasks/{id}/assign/           # Asignar tarea a usuario (owner/miembro)
 GET    /api/tasks/{id}/comments/         # Listar comentarios
 POST   /api/tasks/{id}/comments/         # Crear comentario
 ```
 
-> Nota: la asignación/reasignación se realiza enviando `assigned_to_id` en el PATCH/POST de tareas.
+> Nota: la asignación se realiza enviando el `user_id` en el endpoint de *assign*.
 > Solo se puede asignar a usuarios que pertenezcan al proyecto.
 
 ## 🎯 Funcionalidades Detalladas

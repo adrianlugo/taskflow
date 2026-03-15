@@ -176,8 +176,10 @@ curl http://127.0.0.1:8000/health/
   - Member: solo puede cambiar `status` si la tarea está asignada a él.
 - `DELETE /api/tasks/{id}/` - Eliminar tarea (solo owner)
 - `GET/POST /api/tasks/{id}/comments/` - Comentarios
+- `POST /api/tasks/{id}/assign/` - Asignar tarea (legacy)
 
-> Asignación: enviar `assigned_to_id` en POST/PATCH de tareas. Solo se puede asignar a owner/miembros del proyecto.
+> Recomendado: asignar/reasignar usando `assigned_to_id` en POST/PATCH `/api/tasks/` y `/api/tasks/{id}/`.
+> Solo se puede asignar a usuarios que pertenezcan al proyecto.
 
 ## 🔐 Autenticación
 
