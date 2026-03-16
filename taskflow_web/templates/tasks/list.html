@@ -63,13 +63,16 @@
                         </small>
                     </div>
                     {% endif %}
-                    {% if task.due_date %}
                     <div class="mb-2">
                         <small class="text-muted">
-                            <i class="fas fa-clock"></i> {{ task.due_date|date:"d M Y H:i" }}
+                            <i class="fas fa-clock"></i> 
+                            {% if task.due_date %}
+                                {{ task.due_date|natural_date }}
+                            {% else %}
+                                {{ task.created_at|natural_date }}
+                            {% endif %}
                         </small>
                     </div>
-                    {% endif %}
                 </div>
                 <div class="card-footer bg-transparent">
                     <div class="btn-group btn-group-sm" role="group">
