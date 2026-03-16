@@ -6,6 +6,8 @@ Este proyecto consume la API REST de `taskflow-api` para autenticación, proyect
 ## Caracteristicas
 
 - Inicio de sesion y registro de usuarios.
+- **Estados y prioridades configurables** con validación de integridad
+- **Seguridad de asignación**: Validación en el backend para impedir asignaciones a usuarios ajenos al proyecto
 - Gestion de perfil de usuario.
 - Dashboard con estadísticas dinámicas y resumen de proyectos.
 - CRUD de proyectos (solo owner puede editar/eliminar).
@@ -15,7 +17,8 @@ Este proyecto consume la API REST de `taskflow-api` para autenticación, proyect
 - Sistema de colores visuales (Badges) para estados y prioridades mediante Template Tags personalizados.
 - Comentarios en el detalle de tarea con historial y formulario integrado.
 - Cambio rapido de estado de tareas (flujo por columnas).
-- Asignación de tareas: en create/update el selector se limita a owner+miembros del proyecto.
+- Asignación de tareas: selector limitado a miembros y validación doble (UI + API).
+- Optimización de rendimiento: Vistas de edición con carga de datos optimizada (menos peticiones redundantes).
 - Mensajeria de estado con `django.contrib.messages`.
 
 ## Stack Tecnologico

@@ -35,8 +35,8 @@
 
 ### ✅ **Gestión de Tareas**
 - CRUD completo de tareas
-- Asignación de tareas a usuarios
-- Estados y prioridades configurables
+- **Asignación de tareas** segura (validación de pertenencia al proyecto en el backend)
+- **Estados y prioridades** configurables
 - Fechas de entrega y seguimiento
 
 ### 💬 **Sistema de Comentarios**
