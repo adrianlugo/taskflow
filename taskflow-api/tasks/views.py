@@ -255,6 +255,14 @@ def assign_task(request, task_id):
     
     try:
         user = User.objects.get(id=user_id)
+        
+        # Seguridad: Solo se puede asignar a personas vinculadas al proyecto
+        if user != task.project.owner and user not in task.project.members.all():
+            return Response(
+                {'error': 'No puedes asignar esta tarea a un usuario que no es miembro del proyecto'}, 
+                status=status.HTTP_400_BAD_REQUEST # type: ignore
+            )
+
         task.assigned_to = user
         task.save()
         return Response({'message': 'Tarea asignada exitosamente'})

@@ -299,7 +299,7 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         task_id = kwargs.get('pk')
         success, task = API.get_task(request, task_id)
         if not success:
@@ -308,8 +308,9 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
                 return redirect_response
             messages.error(request, 'Error al cargar la tarea.')
             return redirect('tasks:list')
+        
         self.task = task
-        return super().get(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -321,12 +322,7 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
             kwargs['user_projects'] = []
 
         # Mostrar solo asignables del proyecto (owner + members)
-        task = getattr(self, 'task', None)
-        if not task:
-            task_id = self.kwargs.get('pk')
-            success_task, task = API.get_task(self.request, task_id)
-            if success_task:
-                self.task = task
+        task = self.task
 
         users = []
         project_detail = getattr(self, 'task', {}) or {}
@@ -356,14 +352,6 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        if not hasattr(self, 'task'):
-            task_id = self.kwargs.get('pk')
-            success, task = API.get_task(self.request, task_id)
-            if not success:
-                messages.error(self.request, 'Error al cargar la tarea.')
-                return context
-            self.task = task
 
         raw_due = self.task.get('due_date')  # "2026-02-14T08:37:00-06:00"
         due_local = ''
@@ -410,16 +398,8 @@ class TaskUpdateView(LoginRequiredMixin, FormView):
 
         return context
 
-    def form_valid(self, form):
         task_id = self.kwargs.get('pk')
-
-        if not hasattr(self, 'task'):
-            success, task = API.get_task(self.request, task_id)
-            if not success:
-                messages.error(self.request, 'Error al cargar la tarea.')
-                return redirect('tasks:list')
-            self.task = task
-
+        
         owner = self.task.get('project_detail', {}).get('owner')
         created_by = self.task.get('created_by')
         session_user_id = self.request.session.get('user_data', {}).get('id')
