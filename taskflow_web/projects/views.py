@@ -211,19 +211,11 @@ class ProjectUpdateView(LoginRequiredMixin, FormView):
 class AddProjectMemberView(LoginRequiredMixin, TemplateView):
     def get(self, request, project_id):
         """Devuelve la lista de usuarios disponibles para agregar al proyecto (solo owner)."""
-        # Endpoint real en la API: /projects/<project_id>/members/list/
-        url = f"{API.BASE_URL}/projects/{project_id}/members/list/"
-        try:
-            response = API._make_request(request, 'GET', url)
-            response.raise_for_status()
-            data = response.json()
-            # La API responde: {success: true, users: [...]}
-            if isinstance(data, dict) and data.get('success'):
-                return JsonResponse({'success': True, 'users': data.get('users', [])})
-            # fallback defensivo
-            return JsonResponse({'success': True, 'users': data.get('users', []) if isinstance(data, dict) else data})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': f'Error cargando usuarios: {str(e)}'}, status=400)
+        success, result = API.get_suggested_members(request, project_id)
+        if success:
+            return JsonResponse({'success': True, 'users': result.get('users', [])})
+        else:
+            return JsonResponse({'success': False, 'error': result.get('error', 'Error cargando usuarios')}, status=400)
     
     def post(self, request, project_id): 
         """ Agrega un miembro al proyecto """ 

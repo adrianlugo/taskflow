@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,12 +10,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / 'shared'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e73cnl3sx61c*&tiu*ja^8zdzcv1c4+5ntaj^_4-02s=wxmpcj'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 # Configuración de dominios confiables para peticiones POST (CSRF)
 CSRF_TRUSTED_ORIGINS = [
@@ -147,7 +148,7 @@ MESSAGE_TAGS = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración de la API
-API_BASE_URL = 'http://127.0.0.1:8000/api'
+API_BASE_URL = config('API_BASE_URL', default='http://127.0.0.1:8000/api')
 
 # Configuración de CORS para permitir comunicación con el frontend
 CORS_ALLOWED_ORIGINS = [

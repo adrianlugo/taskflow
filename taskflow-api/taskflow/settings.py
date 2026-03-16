@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-oq-to@#+me9pqgpn-g70sz19kh-zk+e4sufk2y3wl9cx6myhtf'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -139,7 +141,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # Seguridad adicional (throttling viene incluido en DRF)
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle'
@@ -148,11 +149,9 @@ REST_FRAMEWORK = {
         'anon': '100/hour',
         'user': '1000/hour'
     },
-    # Protección contra ataques
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
-    # Documentación automática con Spectacular
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
@@ -160,19 +159,14 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
 ]
 
-# Temporal para desarrollo
 CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
 
 # JWT Configuration
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -182,80 +176,11 @@ SIMPLE_JWT = {
 # Configuración de drf-spectacular para documentación automática
 SPECTACULAR_SETTINGS = {
     'TITLE': 'TaskFlow API - Gestor de Tareas Colaborativo',
-    'DESCRIPTION': """
-    API REST para el gestor de tareas colaborativo TaskFlow.
-    
-    **Características principales:**
-    - 🔐 Autenticacion con tokens JWT
-    - 👥 gestion de usuarios y perfiles
-    - 📋 Creación y gestion de proyectos
-    - ✅ Asignación y seguimiento de tareas
-    - 💬 Sistema de comentarios en tareas
-    - 👥 gestion de miembros de proyectos
-    
-    **Flujo de Autenticacion:**
-    1. Regístrate en `/api/auth/register/`
-    2. Inicia sesión en `/api/auth/login/` para obtener tokens
-    3. Usa el token de acceso en endpoints protegidos
-    4. Refresca el token en `/api/auth/refresh/` cuando expire
-    
-    **Uso de la API:**
-    - Todos los endpoints protegidos requieren token JWT
-    - Usa el botón "Autorizar" en esta interfaz para configurar tu token
-    - Formato: `Bearer tu_access_token_aqui`
-    """,
+    'DESCRIPTION': "API REST para el gestor de tareas colaborativo TaskFlow.",
     'TAGS': [
         {'name': 'Autenticacion', 'description': 'Inicio de sesion, registro, perfil y usuarios.'},
         {'name': 'Proyectos', 'description': 'CRUD de proyectos y gestion de miembros.'},
         {'name': 'Tareas', 'description': 'CRUD de tareas, estados, asignaciones y comentarios.'},
     ],
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
-    'SCHEMA_PATH_PREFIX': '/api/',
-    'SWAGGER_UI_SETTINGS': {
-        'deepLinking': True,
-        'persistAuthorization': True,
-        'displayOperationId': True,
-        'tryItOutEnabled': True,
-        'docExpansion': 'none',
-        'operationsSorter': 'alpha',
-        'tagsSorter': 'none',
-        'defaultModelsExpandDepth': 2,
-        'defaultModelExpandDepth': 2,
-    },
-    'REDOC_UI_SETTINGS': {
-        'hideDownloadButton': False,
-        'hideHostname': False,
-        'noAutoAuth': False,
-        'hideOneOfDescription': False,
-        'theme': {
-            'colors': {
-                'primary': {
-                    'main': '#007bff'
-                }
-            }
-        },
-        'requiredPropsFirst': True,
-        'expandResponses': '200',
-        'hideLoading': True,
-        'nativeScrollbars': True,
-        'pathInMiddlePanel': True,
-        'untrustedSpec': False,
-    },
-    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
-    'PREPROCESSING_HOOKS': ['taskflow.spectacular.preprocess_remove_endpoints'],
-    'POSTPROCESSING_HOOKS': [],
-    'SCHEMA_PATH_PREFIX_TRIM': False,
-    # Configuración de idioma para ReDoc
-    'REDOC_EXTRA': """
-    <script>
-    // Configuración personalizada para ReDoc en español
-    window.addEventListener('load', function() {
-        // ReDoc ya respeta el idioma del navegador
-        // Los textos están en español gracias a nuestra configuración de SPECTACULAR_SETTINGS
-    });
-    </script>
-    """,
-    # Excluir vistas específicas de la generación automática
 }

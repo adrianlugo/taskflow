@@ -632,6 +632,25 @@ class API:
             return False, {'error': str(e)}
 
     @classmethod
+    def get_suggested_members(cls, request, project_id):
+        """Lista usuarios no miembros del proyecto."""
+        url = f"{cls.BASE_URL}/projects/{project_id}/members/list/"
+        try:
+            response = cls._make_request(request, 'GET', url)
+            response.raise_for_status()
+            return True, response.json()
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                try:
+                    return False, resp.json()
+                except ValueError:
+                    return False, {'error': resp.text}
+            return False, {'error': str(e)}
+        except requests.exceptions.RequestException as e:
+            return False, {'error': str(e)}
+
+    @classmethod
     def logout(cls, request):
         """Cerrar sesión"""
         # Limpiar tokens de la sesión (nombres correctos)
