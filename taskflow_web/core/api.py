@@ -56,7 +56,7 @@ class API:
         data = {'refresh': refresh_token}
         
         try:
-            response = requests.post(url, json=data)
+            response = requests.post(url, json=data, timeout=10, proxies={'http': None, 'https': None})
             response.raise_for_status()
             result = response.json()
             
@@ -86,7 +86,7 @@ class API:
         kwargs['headers'] = final_headers
         
         try:
-            response = requests.request(method, url, **kwargs)
+            response = requests.request(method, url, timeout=10, proxies={'http': None, 'https': None}, **kwargs)
             
             # Si el token expir?? o no es v??lido, intentar refrescarlo
             if response.status_code == 401 and request.session.get('refresh'):
@@ -110,7 +110,7 @@ class API:
                     if 'headers' in kwargs and kwargs['headers']:
                         final_headers.update(kwargs['headers'])
                     kwargs['headers'] = final_headers
-                    response = requests.request(method, url, **kwargs)
+                    response = requests.request(method, url, timeout=10, proxies={'http': None, 'https': None}, **kwargs)
             
             return response
         except requests.exceptions.RequestException as e:
@@ -143,7 +143,7 @@ class API:
         
         
         try:
-            response = requests.post(url, json=data)
+            response = requests.post(url, json=data, timeout=10)
             
             response.raise_for_status()
             
@@ -210,7 +210,7 @@ class API:
         url = f"{cls.BASE_URL}/auth/register/"
         
         try:
-            response = requests.post(url, json=user_data)
+            response = requests.post(url, json=user_data, timeout=10)
             response.raise_for_status()
             
             return True, response.json()
