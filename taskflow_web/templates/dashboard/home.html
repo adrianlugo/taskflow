@@ -43,13 +43,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">
-                            {% widthratio tasks_count projects_count 1 %}0
-                        </h4>
-                        <p class="card-text">Promedio Tareas/Proyecto</p>
+                        <h4 class="card-title">{{ completed_tasks_count }}</h4>
+                        <p class="card-text">Tareas Completadas</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-chart-bar fa-2x"></i>
+                        <i class="fas fa-check-double fa-2x"></i>
                     </div>
                 </div>
             </div>

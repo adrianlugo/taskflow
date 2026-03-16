@@ -172,13 +172,13 @@ curl http://127.0.0.1:8000/health/
 - `GET/POST /api/tasks/` - Listar/Crear tareas
 - `GET /api/tasks/{id}/` - Ver tarea
 - `PUT/PATCH /api/tasks/{id}/` - Editar tarea
-  - Owner: puede editar cualquier campo.
+  - Owner o Creador: puede editar cualquier campo y reasignar.
   - Member: solo puede cambiar `status` si la tarea está asignada a él.
-- `DELETE /api/tasks/{id}/` - Eliminar tarea (solo owner)
+- `DELETE /api/tasks/{id}/` - Eliminar tarea (solo owner o creador)
 - `GET/POST /api/tasks/{id}/comments/` - Comentarios
 - `POST /api/tasks/{id}/assign/` - Asignar tarea (legacy)
 
-> Recomendado: asignar/reasignar usando `assigned_to_id` en POST/PATCH `/api/tasks/` y `/api/tasks/{id}/`.
+> Recomendado: asignar/reasignar usando `assigned_to_id` en POST/PATCH `/api/tasks/` y `/api/tasks/{id}/` (Disponible para Owner y Creador).
 > Solo se puede asignar a usuarios que pertenezcan al proyecto.
 
 ## 🔐 Autenticación

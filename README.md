@@ -39,6 +39,8 @@ Sistema de gestión de proyectos y tareas con arquitectura de microservicios, fr
 
 ### ✅ Gestión de Tareas
 - **CRUD completo** de tareas
+- **Colores de estado dinámicos**: Badges visuales inteligentes (Verde, Azul, Amarillo, Gris)
+- **Validación preventiva**: Obliga a crear un proyecto antes de añadir tareas
 - **Estados de tarea** (por hacer, en progreso, revisión, completado)
 - **Marcar como completada** con fecha automática
 - **Comentarios integrados** en el detalle de la tarea
@@ -235,9 +237,9 @@ GET /api/auth/users/            # Listar todos los usuarios
 GET    /api/tasks/                       # Listar tareas (owner/miembro/asignado)
 POST   /api/tasks/                       # Crear tarea (owner o miembro del proyecto)
 GET    /api/tasks/{id}/                  # Ver tarea (owner/miembro/asignado)
-PATCH  /api/tasks/{id}/                  # Actualizar tarea (owner: todo / member: solo status y si está asignado)
-DELETE /api/tasks/{id}/                  # Eliminar tarea (solo owner)
-POST   /api/tasks/{id}/assign/           # Asignar tarea a usuario (owner/miembro)
+PATCH  /api/tasks/{id}/                  # Actualizar tarea (owner/creador: todo / member: solo status si está asignado)
+DELETE /api/tasks/{id}/                  # Eliminar tarea (owner o creador)
+POST   /api/tasks/{id}/assign/           # Asignar tarea a usuario (owner o creador)
 GET    /api/tasks/{id}/comments/         # Listar comentarios
 POST   /api/tasks/{id}/comments/         # Crear comentario
 ```
@@ -254,10 +256,10 @@ POST   /api/tasks/{id}/comments/         # Crear comentario
 - **Logout completo**: Limpieza de todos los tokens
 
 ### 📊 Dashboard Principal
-- **Estadísticas en tiempo real**: Proyectos y tareas activas
+- **Estadísticas reales**: Conteo dinámico de proyectos, tareas totales y tareas completadas
 - **Accesos rápidos**: Creación de proyectos y tareas
-- **Información de usuario**: Nombre y avatar
-- **Navegación intuitiva**: Sidebar con menú contextual
+- **Información de usuario**: Perfil dinámico con estadísticas de progreso personal
+- **Navegación intuitiva**: Sidebar con menú contextual y redirecciones inteligentes (Next URL)
 
 ### 🏗️ Gestión de Proyectos
 - **CRUD completo**: Crear, leer, actualizar, eliminar

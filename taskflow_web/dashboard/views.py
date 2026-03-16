@@ -30,8 +30,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
         # Obtener tareas del usuario
         success, tasks_result = API.get_tasks(request)
         if success:
-            context['tasks'] = tasks_result.get('results', [])
+            tasks = tasks_result.get('results', [])
+            context['tasks'] = tasks
             context['tasks_count'] = tasks_result.get('count', 0)
+            context['completed_tasks_count'] = sum(1 for t in tasks if t.get('status') == 'completado')
         else:
             redirect_response = handle_api_auth_error(request, tasks_result)
             if redirect_response:

@@ -136,6 +136,23 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         success, profile = API.get_profile(self.request)
         context['profile_data'] = profile if success else self.request.session.get('profile_data', {})
 
+        # --- ESTADÍSTICAS ---
+        # 1. Proyectos
+        success_p, projects_result = API.get_projects(self.request)
+        context['projects_count'] = projects_result.get('count', 0) if success_p else 0
+
+        # 2. Tareas
+        success_t, tasks_result = API.get_tasks(self.request)
+        if success_t:
+            tasks = tasks_result.get('results', [])
+            context['tasks_count'] = tasks_result.get('count', 0)
+            context['completed_count'] = sum(1 for t in tasks if t.get('status') == 'completado')
+            context['in_progress_count'] = sum(1 for t in tasks if t.get('status') == 'en_progreso')
+        else:
+            context['tasks_count'] = 0
+            context['completed_count'] = 0
+            context['in_progress_count'] = 0
+
         return context
 
 class ProfileEditView(LoginRequiredMixin, FormView):

@@ -106,7 +106,7 @@ profile_data: {{ profile_data|pprint }}
                     <div class="col-md-3">
                         <div class="card bg-primary text-white">
                             <div class="card-body">
-                                <h4>0</h4>
+                                <h4>{{ projects_count }}</h4>
                                 <small>Proyectos</small>
                             </div>
                         </div>
@@ -114,7 +114,7 @@ profile_data: {{ profile_data|pprint }}
                     <div class="col-md-3">
                         <div class="card bg-success text-white">
                             <div class="card-body">
-                                <h4>0</h4>
+                                <h4>{{ tasks_count }}</h4>
                                 <small>Tareas</small>
                             </div>
                         </div>
@@ -122,7 +122,7 @@ profile_data: {{ profile_data|pprint }}
                     <div class="col-md-3">
                         <div class="card bg-warning text-white">
                             <div class="card-body">
-                                <h4>0</h4>
+                                <h4>{{ completed_count }}</h4>
                                 <small>Completadas</small>
                             </div>
                         </div>
@@ -130,7 +130,7 @@ profile_data: {{ profile_data|pprint }}
                     <div class="col-md-3">
                         <div class="card bg-info text-white">
                             <div class="card-body">
-                                <h4>0</h4>
+                                <h4>{{ in_progress_count }}</h4>
                                 <small>En Progreso</small>
                             </div>
                         </div>

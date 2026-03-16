@@ -7,10 +7,12 @@ Este proyecto consume la API REST de `taskflow-api` para autenticación, proyect
 
 - Inicio de sesion y registro de usuarios.
 - Gestion de perfil de usuario.
-- Dashboard con resumen de proyectos y tareas.
+- Dashboard con estadísticas dinámicas y resumen de proyectos.
 - CRUD de proyectos (solo owner puede editar/eliminar).
 - Gestion de miembros por proyecto (solo owner agrega/elimina miembros).
-- CRUD de tareas (owner edita todo; member solo cambia estado si la tarea está asignada).
+- CRUD de tareas (owner y creador editan todo; member solo cambia estado si la tarea está asignada).
+- Validación preventiva: No se pueden crear tareas sin un proyecto previo.
+- Sistema de colores visuales (Badges) para estados y prioridades mediante Template Tags personalizados.
 - Comentarios en el detalle de tarea con historial y formulario integrado.
 - Cambio rapido de estado de tareas (flujo por columnas).
 - Asignación de tareas: en create/update el selector se limita a owner+miembros del proyecto.
@@ -30,8 +32,8 @@ taskflow_web/
 ├── authentication/        # Login, registro, perfil
 ├── dashboard/             # Home con resumen
 ├── projects/              # Vistas y formularios de proyectos
-├── tasks/                 # Vistas y formularios de tareas
-├── core/                  # Integracion API, mixins y utilidades
+├── tasks/                 # Vistas y formularios de tareas (incluye validación de proyectos)
+├── core/                  # Integracion API, mixins, utilidades y templatetags (colores)
 ├── templates/             # Plantillas HTML
 ├── static/                # JS y recursos estaticos
 ├── taskflow_web/          # settings.py / urls.py
@@ -118,9 +120,9 @@ La comunicacion con el backend se centraliza en `taskflow_web/core/api.py`.
 
 ### Permisos (Owner vs Member)
 
-- **Owner**
-  - Puede editar/eliminar proyectos.
-  - Puede agregar/eliminar miembros del proyecto.
+- **Owner / Creador**
+  - Puede editar/eliminar la tarea/proyecto.
+  - El Owner gestiona miembros; el Creador tiene permisos plenos sobre su tarea creada.
   - Puede editar cualquier campo de las tareas y asignar/reasignar.
 - **Member**
   - Puede ver el proyecto y sus tareas.
