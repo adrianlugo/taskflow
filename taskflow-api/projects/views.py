@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.db import models
 from .models import Project
 from .serializers import ProjectSerializer
+from .permissions import IsProjectOwner
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -56,7 +57,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
 )
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
     def get_queryset(self):
         # Cualq""" u """ier owner/miembro puede ver el proyecto.
@@ -66,18 +67,11 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         ).distinct()
 
     def perform_update(self, serializer):
-        # Solo el propietario puede editar el proyecto (estilo Trello/Jira).
-        project = self.get_object()
-        if project.owner != self.request.user:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Solo el propietario del proyecto puede editarlo")
+        # El permiso IsProjectOwner ya verifica que sea el dueño
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Solo el propietario puede eliminar el proyecto.
-        if instance.owner != self.request.user:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Solo el propietario del proyecto puede eliminarlo")
+        # El permiso IsProjectOwner ya verifica que sea el dueño
         instance.delete()
     
     @extend_schema(

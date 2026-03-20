@@ -6,6 +6,7 @@ from django.db import models
 from .models import Task, TaskComment
 from .serializers import TaskSerializer, TaskCommentSerializer
 from projects.models import Project
+from .permissions import IsProjectParticipant, CanManageTask
 from drf_spectacular.utils import extend_schema
 
 
@@ -76,7 +77,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
 )
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, CanManageTask]
 
     def get_queryset(self):
         return Task.objects.filter(
@@ -86,42 +87,23 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
         ).distinct()
 
     def perform_update(self, serializer):
-        """
-        Reglas de permisos:
-        - Owner del proyecto OR Creador de la tarea: Pueden editar cualquier campo.
-        - Asignado (Responsable): Puede cambiar SOLO el estado.
-        - Miembro: No puede editar.
-        """
+        # Permiso base ya verificado por CanManageTask. 
+        # La lógica de "Asignado solo cambia status" la mantenemos aquí por brevedad.
         task = self.get_object()
-        project = task.project
         user = self.request.user
-
-        # 1. Permiso total para Owner del proyecto y Creador de la tarea
-        if user == project.owner or user == task.created_by:
-            serializer.save()
-            return
-
-        # 2. Si no es Owner ni Creador, verificamos si es el Asignado (Responsable)
-        if task.assigned_to_id != user.id:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Como miembro, no tienes permiso para editar esta tarea a menos que te sea asignada.")
-
-        # 3. Es el Asignado: Solo permitimos cambiar el estado (y completado_at indirectamente).
-        allowed_fields = {"status"}
-        sent_fields = set(getattr(self.request, "data", {}).keys())
         
-        extra_fields = {f for f in sent_fields if f not in allowed_fields}
-        if extra_fields:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Como Responsable de la tarea, solo tienes permiso para cambiar su estado.")
-
+        if user != task.project.owner and user != task.created_by and user == task.assigned_to:
+            # Es solo el asignado: restringir campos
+            allowed_fields = {"status"}
+            sent_fields = set(self.request.data.keys())
+            if not sent_fields.issubset(allowed_fields):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Como Responsable, solo puedes cambiar el estado.")
+        
         serializer.save()
 
     def perform_destroy(self, instance):
-        """Solo el owner o el creador original de la tarea pueden eliminarla."""
-        if self.request.user != instance.project.owner and self.request.user != instance.created_by:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Solo el propietario del proyecto o el creador de la tarea pueden eliminarla.")
+        # CanManageTask ya verifica que sea owner o creador
         instance.delete()
     
     @extend_schema(
